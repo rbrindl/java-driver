@@ -243,13 +243,13 @@ public class CCMTestsSupport {
         }
 
         @Override
-        public ProtocolVersion getDesiredProtocolVersion() {
-            return delegate.getDesiredProtocolVersion();
+        public ProtocolVersion getProtocolVersion() {
+            return delegate.getProtocolVersion();
         }
 
         @Override
-        public ProtocolVersion getDesiredProtocolVersion(ProtocolVersion maximumAllowed) {
-            return delegate.getDesiredProtocolVersion(maximumAllowed);
+        public ProtocolVersion getProtocolVersion(ProtocolVersion maximumAllowed) {
+            return delegate.getProtocolVersion(maximumAllowed);
         }
 
         @Override
@@ -286,12 +286,12 @@ public class CCMTestsSupport {
         }
 
         @SuppressWarnings("SimplifiableIfStatement")
-        private Boolean dse() {
+        private boolean dse() {
             for (CCMConfig ann : annotations) {
                 if (ann != null && ann.dse().length > 0)
                     return ann.dse()[0];
             }
-            return null;
+            return false;
         }
 
         @SuppressWarnings("SimplifiableIfStatement")
@@ -451,16 +451,9 @@ public class CCMTestsSupport {
                 }
 
                 VersionNumber version = VersionNumber.parse(version());
-                Boolean dse = dse();
-                if (dse != null) {
-                    if (dse) {
-                        ccmBuilder.withDSEVersion(version);
-                    } else {
-                        ccmBuilder.withCassandraVersion(version);
-                    }
-                } else {
-                    ccmBuilder.withCassandraVersion(version);
-                }
+                ccmBuilder.withVersion(version);
+                if (dse())
+                    ccmBuilder.withDSE();
                 if (ssl())
                     ccmBuilder.withSSL();
                 if (auth())
