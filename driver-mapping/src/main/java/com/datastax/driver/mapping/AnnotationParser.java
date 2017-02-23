@@ -209,7 +209,7 @@ class AnnotationParser {
             propertyMappers.put(propertyMapper.columnName, propertyMapper);
         }
 
-        return new MappedUDTCodec<T>(userType, udtClass, propertyMappers, mappingManager);
+        return new MappedUDTCodec<T>(userType, udtClass, configuration, propertyMappers, mappingManager);
     }
 
     static <T> AccessorMapper<T> parseAccessor(Class<T> accClass, MappingManager mappingManager, MapperConfiguration configuration) {
