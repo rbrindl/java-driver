@@ -83,7 +83,7 @@ public class MappingManager {
      * Note that this constructor forces the initialization of the session (see
      * {@link #MappingManager(Session, ProtocolVersion)} if that is a problem for you).
      *
-     * @param session the {@code Session} to use.
+     * @param session       the {@code Session} to use.
      * @param configuration the {@code MapperConfiguration} to use be used as default for instantiated mappers.
      */
     public MappingManager(Session session, MapperConfiguration configuration) {
@@ -99,8 +99,8 @@ public class MappingManager {
      * adapt its internal requests, so {@link #MappingManager(Session)} will now initialize the session if needed.
      * If you rely on the session not being initialized, use this constructor and provide the version manually.
      *
-     * @param session the {@code Session} to use.
-     * @param configuration the {@code MapperConfiguration} to use be used as default for instantiated mappers.
+     * @param session         the {@code Session} to use.
+     * @param configuration   the {@code MapperConfiguration} to use be used as default for instantiated mappers.
      * @param protocolVersion the protocol version that will be used with this session.
      */
     public MappingManager(Session session, MapperConfiguration configuration, ProtocolVersion protocolVersion) {
@@ -202,10 +202,14 @@ public class MappingManager {
 
     /**
      * Creates a {@code Mapper} for the provided class (that must be annotated by a
-     * {@link Table} annotation) with default {@code MapperConfiguration}.
+     * {@link Table} annotation) with this manager's {@code MapperConfiguration}.
      * <p/>
      * The {@code MappingManager} only ever keeps one Mapper for each class, and so calling this
      * method multiple times on the same class will always return the same object.
+     * Note that the returned mapper's configuration will be determined by the way it
+     * was first created: if it was through this method, it will be the manager's default configuration,
+     * otherwise if it was through {@link #mapper(Class, MapperConfiguration)}, it will be the configuration
+     * that was passed to that call.
      * <p/>
      * If the type of any field in the class is an {@link UDT}-annotated classes, a codec for that
      * class will automatically be created and registered with the underlying {@code Cluster}.
@@ -221,18 +225,23 @@ public class MappingManager {
 
     /**
      * Creates a {@code Mapper} for the provided class (that must be annotated by a
-     * {@link Table} annotation) with given {@code MapperConfiguration}.
+     * {@link Table} annotation) with the given {@code MapperConfiguration}.
      * <p/>
      * The {@code MappingManager} only ever keeps one Mapper for each class, and so calling this
      * method multiple times on the same class will always return the same object.
+     * Note that the returned mapper's configuration will be determined by the way it
+     * was first created: if it was through this method, it will be the configuration that was passed to
+     * that call, otherwise if it was through {@link #mapper(Class)}, it will be the manager's default
+     * configuration.
      * <p/>
      * If the type of any field in the class is an {@link UDT}-annotated classes, a codec for that
      * class will automatically be created and registered with the underlying {@code Cluster}.
      * This works recursively with UDTs nested in other UDTs or in collections.
      *
-     * @param <T>   the type of the class to map.
-     * @param klass the (annotated) class for which to return the mapper.
-     * @param configuration the configuration to be loaded to the mapper.
+     * @param <T>           the type of the class to map.
+     * @param klass         the (annotated) class for which to return the mapper.
+     * @param configuration the configuration to be loaded to the mapper (might be ignored if the mapper was already
+     *                      created with another configuration).
      * @return the {@code Mapper} object for class {@code klass}.
      */
     public <T> Mapper<T> mapper(Class<T> klass, MapperConfiguration configuration) {
@@ -241,7 +250,7 @@ public class MappingManager {
 
     /**
      * Creates a {@code TypeCodec} for the provided class (that must be annotated by
-     * a {@link UDT} annotation) with default {@code MapperConfiguration}.
+     * a {@link UDT} annotation) with this manager's {@code MapperConfiguration}.
      * <p/>
      * This method also registers the codec against the underlying {@code Cluster}.
      * In addition, the codecs for any nested UDTs will also be created and registered.
@@ -249,6 +258,14 @@ public class MappingManager {
      * You don't need to call this method explicitly if you already call {@link #mapper(Class)}
      * for a class that references this UDT class (creating a mapper will automatically
      * process all UDTs that it uses).
+     * <p/>
+     * The {@code MappingManager} only ever keeps one codec for each class; calling this method
+     * multiple times on the same class will return the same object, except if the UDT schema is
+     * altered at runtime: in that case, the codec will be replaced automatically.
+     * Note that the returned codec's configuration will be determined by the way it
+     * was first created: if it was through this method, it will be the manager's default configuration,
+     * otherwise if it was through {@link #udtCodec(Class, MapperConfiguration)}, it will be the configuration
+     * that was passed to that call.
      *
      * @param <T>   the type of the class to map.
      * @param klass the (annotated) class for which to return the codec.
@@ -260,7 +277,7 @@ public class MappingManager {
 
     /**
      * Creates a {@code TypeCodec} for the provided class (that must be annotated by
-     * a {@link UDT} annotation) with given {@code MapperConfiguration}.
+     * a {@link UDT} annotation) with the given {@code MapperConfiguration}.
      * <p/>
      * This method also registers the codec against the underlying {@code Cluster}.
      * In addition, the codecs for any nested UDTs will also be created and registered.
@@ -268,9 +285,17 @@ public class MappingManager {
      * You don't need to call this method explicitly if you already call {@link #mapper(Class)}
      * for a class that references this UDT class (creating a mapper will automatically
      * process all UDTs that it uses).
+     * <p/>
+     * The {@code MappingManager} only ever keeps one codec for each class; calling this method
+     * multiple times on the same class will return the same object, except if the UDT schema is
+     * altered at runtime: in that case, the codec will be replaced automatically.
+     * Note that the returned codec's configuration will be determined by the way it
+     * was first created: if it was through this method, it will be the configuration
+     * that was passed to that call, otherwise if it was through {@link #udtCodec(Class, MapperConfiguration)},
+     * it will be the manager's default configuration.
      *
-     * @param <T>   the type of the class to map.
-     * @param klass the (annotated) class for which to return the codec.
+     * @param <T>           the type of the class to map.
+     * @param klass         the (annotated) class for which to return the codec.
      * @param configuration the configuration to be used.
      * @return the codec that maps the provided class to the corresponding user-defined type.
      */
@@ -280,10 +305,14 @@ public class MappingManager {
 
     /**
      * Creates an accessor object based on the provided interface (that must be annotated by
-     * a {@link Accessor} annotation) with default {@code MapperConfiguration}.
+     * a {@link Accessor} annotation) with this manager's {@code MapperConfiguration}.
      * <p/>
      * The {@code MappingManager} only ever keep one Accessor for each class, and so calling this
-     * method multiple time on the same class will always return the same object.
+     * method multiple times on the same class will always return the same object.
+     * Note that the returned accessor's configuration will be determined by the way it
+     * was first created: if it was through this method, it will be the manager's default configuration,
+     * otherwise if it was through {@link #createAccessor(Class, MapperConfiguration)}, it will be the configuration
+     * that was passed to that call.
      *
      * @param <T>   the type of the accessor class.
      * @param klass the (annotated) class for which to create an accessor object.
@@ -295,13 +324,17 @@ public class MappingManager {
 
     /**
      * Creates an accessor object based on the provided interface (that must be annotated by
-     * a {@link Accessor} annotation) with given {@code MapperConfiguration}.
+     * a {@link Accessor} annotation) with the given {@code MapperConfiguration}.
      * <p/>
      * The {@code MappingManager} only ever keep one Accessor for each class, and so calling this
-     * method multiple time on the same class will always return the same object.
+     * method multiple times on the same class will always return the same object.
+     * Note that the returned accessor's configuration will be determined by the way it
+     * was first created: if it was through this method, it will be the configuration that was passed to
+     * that call, otherwise if it was through {@link #createAccessor(Class)}, it will be the manager's default
+     * configuration.
      *
-     * @param <T>   the type of the accessor class.
-     * @param klass the (annotated) class for which to create an accessor object.
+     * @param <T>           the type of the accessor class.
+     * @param klass         the (annotated) class for which to create an accessor object.
      * @param configuration the configuration to be used.
      * @return the accessor object for class {@code klass}.
      */
