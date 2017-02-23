@@ -41,13 +41,11 @@ import static com.google.common.base.Preconditions.checkArgument;
  */
 class PropertyMapper {
 
-    private static final Set<Class<? extends Annotation>> COLUMN_ANNOTATIONS = ImmutableSet.of(
-            PartitionKey.class,
-            ClusteringColumn.class,
-            Column.class,
-            com.datastax.driver.mapping.annotations.Field.class,
-            Computed.class
-    );
+    private static final Set<Class<? extends Annotation>> COLUMN_ANNOTATIONS =
+            ImmutableSet.<Class<? extends Annotation>>builder()
+                    .addAll(AnnotationParser.VALID_COLUMN_ANNOTATIONS)
+                    .addAll(AnnotationParser.VALID_FIELD_ANNOTATIONS)
+                    .build();
 
     private final String propertyName;
     final String alias;
@@ -146,7 +144,7 @@ class PropertyMapper {
         throw new IllegalArgumentException("Unhandled PropertyMappingStrategy" + mapperConfiguration.getPropertyScanConfiguration().getPropertyMappingStrategy().name());
     }
 
-    boolean hasColumnAnnotation() {
+    private boolean hasColumnAnnotation() {
         for (Class<? extends Annotation> columnAnnotation : COLUMN_ANNOTATIONS) {
             if (hasAnnotation(columnAnnotation)) {
                 return true;

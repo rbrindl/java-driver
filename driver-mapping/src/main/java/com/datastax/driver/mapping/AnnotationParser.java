@@ -42,7 +42,7 @@ class AnnotationParser {
     /**
      * Annotations allowed on a property that maps to a table column.
      */
-    private static final Set<Class<? extends Annotation>> VALID_COLUMN_ANNOTATIONS = ImmutableSet.of(
+    static final Set<Class<? extends Annotation>> VALID_COLUMN_ANNOTATIONS = ImmutableSet.of(
             Column.class,
             Computed.class,
             ClusteringColumn.class,
@@ -55,7 +55,7 @@ class AnnotationParser {
     /**
      * Annotations allowed on a property that maps to a UDT field.
      */
-    private static final Set<Class<? extends Annotation>> VALID_FIELD_ANNOTATIONS = ImmutableSet.of(
+    static final Set<Class<? extends Annotation>> VALID_FIELD_ANNOTATIONS = ImmutableSet.of(
             Field.class,
             Frozen.class,
             FrozenKey.class,
