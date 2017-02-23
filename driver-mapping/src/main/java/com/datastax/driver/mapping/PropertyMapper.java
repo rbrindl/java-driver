@@ -135,12 +135,12 @@ class PropertyMapper {
         // JAVA-1310: Make transient properties configurable at mapper level
         // (should properties be transient by default or not)
         switch (mapperConfiguration.getPropertyScanConfiguration().getPropertyMappingStrategy()) {
-            case BLACK_LIST:
+            case OPT_OUT:
                 return hasAnnotation(Transient.class) ||
                         // If a property is both annotated and declared as transient in the class annotation, the property
                         // annotations take precedence (the property will not be transient)
                         classLevelTransients.contains(propertyName) && !hasColumnAnnotation();
-            case WHITE_LIST:
+            case OPT_IN:
                 return !hasColumnAnnotation();
         }
         throw new IllegalArgumentException("Unhandled PropertyMappingStrategy" + mapperConfiguration.getPropertyScanConfiguration().getPropertyMappingStrategy().name());

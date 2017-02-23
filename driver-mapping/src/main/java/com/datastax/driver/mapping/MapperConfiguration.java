@@ -87,7 +87,7 @@ public class MapperConfiguration {
         public PropertyScanConfiguration() {
             this.excludedProperties = new HashSet<String>();
             this.propertyScanScope = new PropertyScanScope();
-            this.propertyMappingStrategy = PropertyMappingStrategy.BLACK_LIST;
+            this.propertyMappingStrategy = PropertyMappingStrategy.OPT_OUT;
             this.hierarchyScanStrategy = new HierarchyScanStrategy();
         }
 
@@ -213,7 +213,7 @@ public class MapperConfiguration {
         /**
          * Set whether or not the scope include class fields
          *
-         * @param scanFields    whether or not the scope include class fields
+         * @param scanFields whether or not the scope include class fields
          * @return the PropertyScanScope to enable builder pattern
          */
         public PropertyScanScope setScanFields(boolean scanFields) {
@@ -332,6 +332,20 @@ public class MapperConfiguration {
 
     }
 
-    public enum PropertyMappingStrategy {BLACK_LIST, WHITE_LIST}
+    /**
+     * A strategy to determine which properties of a Java class are mapped to Cassandra columns or UDT fields.
+     */
+    public enum PropertyMappingStrategy {
+        /**
+         * Unless a property is explicitly {@code transient} or annotated with {@code Transient}, it will be mapped.
+         */
+        OPT_OUT,
+        /**
+         * A property will only be mapped if it is explicitly annotated with either {@code PartitionKey},
+         * {@code ClusteringColumn}, {@code Column}, {@code com.datastax.driver.mapping.annotations.Field} or
+         * {@code Computed}.
+         */
+        OPT_IN
+    }
 
 }

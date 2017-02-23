@@ -19,7 +19,6 @@ import com.datastax.driver.core.CCMTestsSupport;
 import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.datastax.driver.mapping.annotations.Table;
 import com.datastax.driver.mapping.annotations.Transient;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -40,7 +39,7 @@ public class MapperConfigurationMappingStrategyTest extends CCMTestsSupport {
         MappingManager mappingManager = new MappingManager(session());
         MapperConfiguration conf = new MapperConfiguration();
         MapperConfiguration.PropertyScanConfiguration scanConf = new MapperConfiguration.PropertyScanConfiguration();
-        scanConf.setPropertyMappingStrategy(MapperConfiguration.PropertyMappingStrategy.BLACK_LIST);
+        scanConf.setPropertyMappingStrategy(MapperConfiguration.PropertyMappingStrategy.OPT_OUT);
         conf.setPropertyScanConfiguration(scanConf);
         Mapper<Foo1> mapper = mappingManager.mapper(Foo1.class, conf);
         assertThat(mapper.get(1).getV()).isEqualTo(1);
@@ -79,7 +78,7 @@ public class MapperConfigurationMappingStrategyTest extends CCMTestsSupport {
         MappingManager mappingManager = new MappingManager(session());
         MapperConfiguration conf = new MapperConfiguration();
         MapperConfiguration.PropertyScanConfiguration scanConf = new MapperConfiguration.PropertyScanConfiguration();
-        scanConf.setPropertyMappingStrategy(MapperConfiguration.PropertyMappingStrategy.WHITE_LIST);
+        scanConf.setPropertyMappingStrategy(MapperConfiguration.PropertyMappingStrategy.OPT_IN);
         conf.setPropertyScanConfiguration(scanConf);
         mappingManager.mapper(Foo2.class, conf);
     }
