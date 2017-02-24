@@ -23,10 +23,13 @@ import com.datastax.driver.mapping.annotations.Table;
 import com.datastax.driver.mapping.annotations.Transient;
 import org.testng.annotations.Test;
 
+import static com.datastax.driver.mapping.config.PropertyAccessStrategy.*;
+import static org.assertj.core.api.Assertions.assertThat;
+
 /**
  * Test for JAVA-1310 - validate ability configure property scope - getters vs. fields
  */
-public class MappingConfigurationScanScopeTest extends CCMTestsSupport {
+public class MappingConfigurationPropertyAccessTest extends CCMTestsSupport {
 
     @Override
     public void onTestContextInitialized() {
@@ -36,18 +39,17 @@ public class MappingConfigurationScanScopeTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void should_ignore_fields() {
-        MappingManager mappingManager = new MappingManager(session());
-        MappingConfiguration conf = MappingConfiguration.builder().build();
-        PropertyScanConfiguration scanConf = PropertyScanConfiguration.builder().build();
-        PropertyAccessStrategy scope = new PropertyAccessStrategy()
-                .setScanFields(false)
-                .setScanGetters(true);
-        scanConf.setPropertyAccessStrategy(scope);
-        conf.setPropertyScanConfiguration(scanConf);
-        mappingManager.mapper(Foo1.class, conf);
+        MappingConfiguration conf = MappingConfiguration.builder()
+                .withPropertyScanConfiguration(PropertyScanConfiguration.builder()
+                        .withPropertyAccessStrategy(GETTERS_AND_SETTERS)
+                        .build())
+                .build();
+        MappingManager mappingManager = new MappingManager(session(), conf);
+        mappingManager.mapper(Foo1.class);
     }
 
     @Table(name = "foo")
+    @SuppressWarnings({"unused", "WeakerAccess"})
     public static class Foo1 {
         private int k;
 
@@ -65,18 +67,17 @@ public class MappingConfigurationScanScopeTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void should_ignore_getters() {
-        MappingManager mappingManager = new MappingManager(session());
-        MappingConfiguration conf = MappingConfiguration.builder().build();
-        PropertyScanConfiguration scanConf = PropertyScanConfiguration.builder().build();
-        PropertyAccessStrategy scope = new PropertyAccessStrategy()
-                .setScanFields(true)
-                .setScanGetters(false);
-        scanConf.setPropertyAccessStrategy(scope);
-        conf.setPropertyScanConfiguration(scanConf);
-        mappingManager.mapper(Foo2.class, conf);
+        MappingConfiguration conf = MappingConfiguration.builder()
+                .withPropertyScanConfiguration(PropertyScanConfiguration.builder()
+                        .withPropertyAccessStrategy(FIELDS)
+                        .build())
+                .build();
+        MappingManager mappingManager = new MappingManager(session(), conf);
+        mappingManager.mapper(Foo2.class);
     }
 
     @Table(name = "foo")
+    @SuppressWarnings({"unused", "WeakerAccess"})
     public static class Foo2 {
         @PartitionKey
         private int k;
@@ -93,20 +94,19 @@ public class MappingConfigurationScanScopeTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void should_map_fields_and_getters() {
-        MappingManager mappingManager = new MappingManager(session());
-        MappingConfiguration conf = MappingConfiguration.builder().build();
-        PropertyScanConfiguration scanConf = PropertyScanConfiguration.builder().build();
-        PropertyAccessStrategy scope = new PropertyAccessStrategy()
-                .setScanFields(true)
-                .setScanGetters(true);
-        scanConf.setPropertyAccessStrategy(scope);
-        conf.setPropertyScanConfiguration(scanConf);
-        Mapper<Foo3> mapper = mappingManager.mapper(Foo3.class, conf);
+        MappingConfiguration conf = MappingConfiguration.builder()
+                .withPropertyScanConfiguration(PropertyScanConfiguration.builder()
+                        .withPropertyAccessStrategy(BOTH)
+                        .build())
+                .build();
+        MappingManager mappingManager = new MappingManager(session(), conf);
+        Mapper<Foo3> mapper = mappingManager.mapper(Foo3.class);
         Foo3 foo = mapper.get(1);
-        Assertions.assertThat(foo.getV()).isEqualTo(1);
+        assertThat(foo.getV()).isEqualTo(1);
     }
 
     @Table(name = "foo")
+    @SuppressWarnings({"unused", "WeakerAccess"})
     public static class Foo3 {
         @PartitionKey
         private int k;
@@ -114,6 +114,7 @@ public class MappingConfigurationScanScopeTest extends CCMTestsSupport {
         @Transient
         private int storeVValueButNotMapped;
 
+        @SuppressWarnings({"unused", "WeakerAccess"})
         public int getK() {
             return k;
         }

@@ -23,6 +23,8 @@ import com.datastax.driver.mapping.annotations.Table;
 import com.datastax.driver.mapping.annotations.Transient;
 import org.testng.annotations.Test;
 
+import static com.datastax.driver.mapping.config.PropertyMappingStrategy.OPT_IN;
+import static com.datastax.driver.mapping.config.PropertyMappingStrategy.OPT_OUT;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -38,15 +40,17 @@ public class MappingConfigurationMappingStrategyTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void should_map_only_non_transient() {
-        MappingManager mappingManager = new MappingManager(session());
-        MappingConfiguration conf = new MappingConfiguration();
-        PropertyScanConfiguration scanConf = new PropertyScanConfiguration();
-        scanConf.setPropertyMappingStrategy(PropertyMappingStrategy.OPT_OUT);
-        conf.setPropertyScanConfiguration(scanConf);
-        Mapper<Foo1> mapper = mappingManager.mapper(Foo1.class, conf);
+        MappingConfiguration conf = MappingConfiguration.builder()
+                .withPropertyScanConfiguration(PropertyScanConfiguration.builder()
+                        .withPropertyMappingStrategy(OPT_OUT)
+                        .build())
+                .build();
+        MappingManager mappingManager = new MappingManager(session(), conf);
+        Mapper<Foo1> mapper = mappingManager.mapper(Foo1.class);
         assertThat(mapper.get(1).getV()).isEqualTo(1);
     }
 
+    @SuppressWarnings({"unused", "WeakerAccess"})
     @Table(name = "foo")
     public static class Foo1 {
 
@@ -77,15 +81,17 @@ public class MappingConfigurationMappingStrategyTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void should_map_only_annotated() {
-        MappingManager mappingManager = new MappingManager(session());
-        MappingConfiguration conf = new MappingConfiguration();
-        PropertyScanConfiguration scanConf = new PropertyScanConfiguration();
-        scanConf.setPropertyMappingStrategy(PropertyMappingStrategy.OPT_IN);
-        conf.setPropertyScanConfiguration(scanConf);
-        mappingManager.mapper(Foo2.class, conf);
+        MappingConfiguration conf = MappingConfiguration.builder()
+                .withPropertyScanConfiguration(PropertyScanConfiguration.builder()
+                        .withPropertyMappingStrategy(OPT_IN)
+                        .build())
+                .build();
+        MappingManager mappingManager = new MappingManager(session(), conf);
+        mappingManager.mapper(Foo2.class);
     }
 
     @Table(name = "foo")
+    @SuppressWarnings({"unused", "WeakerAccess"})
     public static class Foo2 {
         @PartitionKey
         private int k;

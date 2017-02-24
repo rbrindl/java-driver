@@ -41,17 +41,18 @@ public class MappingConfigurationHierarchyScanStrategyTest extends CCMTestsSuppo
 
     @Test(groups = "short")
     public void should_not_inherit_properties() {
-        MappingManager mappingManager = new MappingManager(session());
-        MappingConfiguration conf = new MappingConfiguration();
-        PropertyScanConfiguration scanConf = new PropertyScanConfiguration();
-        HierarchyScanStrategy scanStrategy = new HierarchyScanStrategy();
-        scanStrategy.setHierarchyScanEnabled(false);
-        scanConf.setHierarchyScanStrategy(scanStrategy);
-        conf.setPropertyScanConfiguration(scanConf);
-        mappingManager.mapper(Foo1.class, conf);
+        MappingConfiguration conf = MappingConfiguration.builder()
+                .withPropertyScanConfiguration(PropertyScanConfiguration.builder()
+                        .withHierarchyScanStrategy(HierarchyScanStrategy.builder()
+                                .withHierarchyScanEnabled(false)
+                                .build())
+                        .build())
+                .build();
+        MappingManager mappingManager = new MappingManager(session(), conf);
+        mappingManager.mapper(Foo1.class);
     }
 
-    @Table(name = "foo")
+    @SuppressWarnings({"unused", "WeakerAccess"})
     public static class Boo1 {
 
         @Column(name = "notAColumn")
@@ -60,6 +61,7 @@ public class MappingConfigurationHierarchyScanStrategyTest extends CCMTestsSuppo
     }
 
     @Table(name = "foo")
+    @SuppressWarnings({"unused", "WeakerAccess"})
     public static class Foo1 extends Boo1 {
 
         @PartitionKey
@@ -77,18 +79,19 @@ public class MappingConfigurationHierarchyScanStrategyTest extends CCMTestsSuppo
 
     @Test(groups = "short")
     public void should_inherit_only_boo() {
-        MappingManager mappingManager = new MappingManager(session());
-        MappingConfiguration conf = new MappingConfiguration();
-        PropertyScanConfiguration scanConf = new PropertyScanConfiguration();
-        HierarchyScanStrategy scanStrategy = new HierarchyScanStrategy();
-        scanStrategy.setDeepestAllowedAncestor(Boo2.class);
-        scanConf.setHierarchyScanStrategy(scanStrategy);
-        conf.setPropertyScanConfiguration(scanConf);
-        Mapper<Foo2> mapper = mappingManager.mapper(Foo2.class, conf);
+        MappingConfiguration conf = MappingConfiguration.builder()
+                .withPropertyScanConfiguration(PropertyScanConfiguration.builder()
+                        .withHierarchyScanStrategy(HierarchyScanStrategy.builder()
+                                .withNearestExcludedAncestor(Goo2.class)
+                                .build())
+                        .build())
+                .build();
+        MappingManager mappingManager = new MappingManager(session(), conf);
+        Mapper<Foo2> mapper = mappingManager.mapper(Foo2.class);
         assertThat(mapper.get(1).getV()).isEqualTo(1);
     }
 
-    @Table(name = "foo")
+    @SuppressWarnings({"unused", "WeakerAccess"})
     public static class Goo2 {
 
         @Column(name = "notAColumn")
@@ -96,7 +99,7 @@ public class MappingConfigurationHierarchyScanStrategyTest extends CCMTestsSuppo
 
     }
 
-    @Table(name = "foo")
+    @SuppressWarnings({"unused", "WeakerAccess"})
     public static class Boo2 extends Goo2 {
 
         private int v;
@@ -112,58 +115,8 @@ public class MappingConfigurationHierarchyScanStrategyTest extends CCMTestsSuppo
     }
 
     @Table(name = "foo")
+    @SuppressWarnings({"unused", "WeakerAccess"})
     public static class Foo2 extends Boo2 {
-
-        @PartitionKey
-        private int k;
-
-        public int getK() {
-            return k;
-        }
-
-        public void setK(int k) {
-            this.k = k;
-        }
-
-    }
-
-    @Test(groups = "short")
-    public void ignore_non_annotated_classes() {
-        MappingManager mappingManager = new MappingManager(session());
-        MappingConfiguration conf = new MappingConfiguration();
-        PropertyScanConfiguration scanConf = new PropertyScanConfiguration();
-        HierarchyScanStrategy scanStrategy = new HierarchyScanStrategy();
-        scanStrategy.setScanOnlyAnnotatedClasses(true);
-        scanConf.setHierarchyScanStrategy(scanStrategy);
-        conf.setPropertyScanConfiguration(scanConf);
-        Mapper<Foo3> mapper = mappingManager.mapper(Foo3.class, conf);
-        assertThat(mapper.get(1).getV()).isEqualTo(1);
-    }
-
-    @Table(name = "foo")
-    public static class Goo3 {
-
-        private int v;
-
-        public int getV() {
-            return v;
-        }
-
-        public void setV(int v) {
-            this.v = v;
-        }
-
-    }
-
-    public static class Boo3 extends Goo3 {
-
-        @Column(name = "notAColumn")
-        private int notAColumn;
-
-    }
-
-    @Table(name = "foo")
-    public static class Foo3 extends Boo3 {
 
         @PartitionKey
         private int k;

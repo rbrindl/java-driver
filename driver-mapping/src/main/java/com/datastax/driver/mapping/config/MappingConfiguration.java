@@ -16,31 +16,23 @@
 package com.datastax.driver.mapping.config;
 
 /**
- * The global configuration for the {@link Mapper}.
+ * The configuration to use for the mappers.
  * <p/>
  * The following categories can be configured:
  * <ol>
- *     <li>
- *         {@link PropertyScanConfiguration property scanning}
- *          <ul>
- *              <li>{@link PropertyAccessStrategy property access strategy}: defines how to access mapped properties.</li>
- *              <li>{@link PropertyMappingStrategy property mapping strategy}: defines whether or not to map all discovered
- *              properties, or only those explicitly annotated.</li>
- *              <li>{@link HierarchyScanStrategy hierarchy scanning strategy}: defines how to scan for mapped properties in
- *              parent classes.</li>
- *          </ul>
- *     </li>
+ * <li>
+ * {@link PropertyScanConfiguration property scanning}
+ * <ul>
+ * <li>{@link PropertyAccessStrategy property access strategy}: defines how to access mapped properties.</li>
+ * <li>{@link PropertyMappingStrategy property mapping strategy}: defines whether or not to map all discovered
+ * properties, or only those explicitly annotated.</li>
+ * <li>{@link HierarchyScanStrategy hierarchy scanning strategy}: defines how to scan for mapped properties in
+ * parent classes.</li>
+ * </ul>
+ * </li>
  * </ol>
  */
 public class MappingConfiguration {
-
-    public static final MappingConfiguration DEFAULT_INSTANCE = MappingConfiguration.builder().build();
-
-    private final PropertyScanConfiguration propertyScanConfiguration;
-
-    private MappingConfiguration(PropertyScanConfiguration propertyScanConfiguration) {
-        this.propertyScanConfiguration = propertyScanConfiguration;
-    }
 
     /**
      * Returns a new {@link Builder} instance.
@@ -56,7 +48,7 @@ public class MappingConfiguration {
      */
     public static class Builder {
 
-        private PropertyScanConfiguration propertyScanConfiguration;
+        private PropertyScanConfiguration propertyScanConfiguration = PropertyScanConfiguration.builder().build();
 
         /**
          * Sets the {@link PropertyScanConfiguration} to use.
@@ -69,9 +61,21 @@ public class MappingConfiguration {
             return this;
         }
 
+        /**
+         * Builds a new instance of {@link MappingConfiguration} with this builder's
+         * settings.
+         *
+         * @return a new instance of {@link MappingConfiguration}
+         */
         public MappingConfiguration build() {
             return new MappingConfiguration(propertyScanConfiguration);
         }
+    }
+
+    private final PropertyScanConfiguration propertyScanConfiguration;
+
+    private MappingConfiguration(PropertyScanConfiguration propertyScanConfiguration) {
+        this.propertyScanConfiguration = propertyScanConfiguration;
     }
 
     /**

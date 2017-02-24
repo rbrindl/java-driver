@@ -26,7 +26,119 @@ import java.util.Set;
  */
 public class PropertyScanConfiguration {
 
-    private final Set<String> excludedProperties;
+    /**
+     * Returns a new {@link PropertyScanConfiguration.Builder} instance.
+     *
+     * @return a new {@link PropertyScanConfiguration.Builder} instance.
+     */
+    public static PropertyScanConfiguration.Builder builder() {
+        return new PropertyScanConfiguration.Builder();
+    }
+
+    /**
+     * Builder for {@link PropertyScanConfiguration} instances.
+     */
+    public static class Builder {
+
+        private Set<String> transientProperties = new HashSet<String>();
+
+        private PropertyAccessStrategy propertyAccessStrategy = PropertyAccessStrategy.BOTH;
+
+        private PropertyMappingStrategy propertyMappingStrategy = PropertyMappingStrategy.OPT_OUT;
+
+        private HierarchyScanStrategy hierarchyScanStrategy = HierarchyScanStrategy.builder().build();
+
+        /**
+         * Adds properties to globally exclude from mapping.
+         * <p/>
+         * Property names added here will be considered transient throughout
+         * all the mappers created with this configuration;
+         * if a more fine-grained tuning is required, it is also possible
+         * to use the {@link com.datastax.driver.mapping.annotations.Transient @Transient} annotation
+         * on a specific property.
+         * <p/>
+         * Note that this setting has no effect if the
+         * {@link #withPropertyMappingStrategy(PropertyMappingStrategy) property mapping strategy}
+         * is set to {@link PropertyMappingStrategy#OPT_IN OPT_IN}, because with this
+         * strategy all properties are transient by default.
+         *
+         * @param transientProperties a collection of properties to exclude from mapping.
+         * @return this {@link Builder} instance (to allow for fluent builder pattern).
+         */
+        public Builder addTransientProperties(Collection<String> transientProperties) {
+            this.transientProperties.addAll(transientProperties);
+            return this;
+        }
+
+        /**
+         * Adds properties to globally exclude from mapping.
+         * <p/>
+         * Property names added here will be considered transient throughout
+         * all the mappers created with this configuration;
+         * if a more fine-grained tuning is required, it is also possible
+         * to use the {@link com.datastax.driver.mapping.annotations.Transient @Transient} annotation
+         * on a specific property.
+         * <p/>
+         * Note that this setting has no effect if the
+         * {@link #withPropertyMappingStrategy(PropertyMappingStrategy) property mapping strategy}
+         * is set to {@link PropertyMappingStrategy#OPT_IN OPT_IN}, because with this
+         * strategy all properties are transient by default.
+         *
+         * @param transientProperties a collection of properties to exclude from mapping.
+         * @return this {@link Builder} instance (to allow for fluent builder pattern).
+         */
+        public Builder addTransientProperties(String... transientProperties) {
+            return addTransientProperties(Arrays.asList(transientProperties));
+        }
+
+        /**
+         * Sets the {@link PropertyAccessStrategy property access strategy} to use.
+         * The default is {@link PropertyAccessStrategy#BOTH}.
+         *
+         * @param propertyAccessStrategy the {@link PropertyAccessStrategy property access strategy} to use.
+         * @return this {@link Builder} instance (to allow for fluent builder pattern).
+         */
+        public Builder withPropertyAccessStrategy(PropertyAccessStrategy propertyAccessStrategy) {
+            this.propertyAccessStrategy = propertyAccessStrategy;
+            return this;
+        }
+
+        /**
+         * Sets the {@link PropertyMappingStrategy property mapping strategy} to use.
+         * The default is {@link PropertyMappingStrategy#OPT_OUT}.
+         *
+         * @param propertyMappingStrategy the {@link PropertyMappingStrategy property mapping strategy} to use.
+         * @return this {@link Builder} instance (to allow for fluent builder pattern).
+         */
+        public Builder withPropertyMappingStrategy(PropertyMappingStrategy propertyMappingStrategy) {
+            this.propertyMappingStrategy = propertyMappingStrategy;
+            return this;
+        }
+
+        /**
+         * Sets the {@link HierarchyScanStrategy hierarchy scan strategy} to use.
+         *
+         * @param hierarchyScanStrategy the {@link HierarchyScanStrategy hierarchy scan strategy} to use.
+         * @return this {@link Builder} instance (to allow for fluent builder pattern).
+         */
+        public Builder withHierarchyScanStrategy(HierarchyScanStrategy hierarchyScanStrategy) {
+            this.hierarchyScanStrategy = hierarchyScanStrategy;
+            return this;
+        }
+
+        /**
+         * Builds a new instance of {@link PropertyScanConfiguration} with this builder's
+         * settings.
+         *
+         * @return a new instance of {@link PropertyScanConfiguration}
+         */
+        public PropertyScanConfiguration build() {
+            return new PropertyScanConfiguration(transientProperties, propertyAccessStrategy, propertyMappingStrategy, hierarchyScanStrategy);
+        }
+
+    }
+
+    private final Set<String> transientProperties;
 
     private final PropertyAccessStrategy propertyAccessStrategy;
 
@@ -34,27 +146,30 @@ public class PropertyScanConfiguration {
 
     private final HierarchyScanStrategy hierarchyScanStrategy;
 
-    public PropertyScanConfiguration() {
-        this.excludedProperties = new HashSet<String>();
-        this.propertyAccessStrategy = PropertyAccessStrategy.BOTH;
-        this.propertyMappingStrategy = PropertyMappingStrategy.OPT_OUT;
-        this.hierarchyScanStrategy = new HierarchyScanStrategy();
-    }
-
-    private PropertyScanConfiguration(Set<String> excludedProperties, PropertyAccessStrategy propertyAccessStrategy, PropertyMappingStrategy propertyMappingStrategy, HierarchyScanStrategy hierarchyScanStrategy) {
-        this.excludedProperties = excludedProperties;
+    private PropertyScanConfiguration(Set<String> transientProperties, PropertyAccessStrategy propertyAccessStrategy, PropertyMappingStrategy propertyMappingStrategy, HierarchyScanStrategy hierarchyScanStrategy) {
+        this.transientProperties = transientProperties;
         this.propertyAccessStrategy = propertyAccessStrategy;
         this.propertyMappingStrategy = propertyMappingStrategy;
         this.hierarchyScanStrategy = hierarchyScanStrategy;
     }
 
     /**
-     * Returns a collection of properties to exclude from mapping
+     * Returns a collection of properties to globally exclude from mapping.
+     * <p/>
+     * Property names defined here will be considered transient throughout
+     * all the mappers created with this configuration;
+     * if a more fine-grained tuning is required, it is also possible
+     * to use the {@link com.datastax.driver.mapping.annotations.Transient @Transient} annotation
+     * on a specific property.
+     * <p/>
+     * Note that this setting has no effect if the {@link #getPropertyMappingStrategy()}
+     * is set to {@link PropertyMappingStrategy#OPT_IN OPT_IN}, because with this
+     * strategy all properties are transient by default.
      *
-     * @return a collection of properties to exclude from mapping
+     * @return a collection of properties to exclude from mapping.
      */
-    public Set<String> getExcludedProperties() {
-        return excludedProperties;
+    public Set<String> getTransientProperties() {
+        return transientProperties;
     }
 
     /**

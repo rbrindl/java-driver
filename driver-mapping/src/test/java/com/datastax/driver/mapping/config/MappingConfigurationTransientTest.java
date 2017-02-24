@@ -40,6 +40,7 @@ public class MappingConfigurationTransientTest extends CCMTestsSupport {
     }
 
     @Table(name = "foo")
+    @SuppressWarnings({"unused", "WeakerAccess"})
     public static class Foo1 {
         @PartitionKey
         private int k;
@@ -54,6 +55,7 @@ public class MappingConfigurationTransientTest extends CCMTestsSupport {
     }
 
     @Table(name = "foo")
+    @SuppressWarnings({"unused", "WeakerAccess"})
     public static class Foo2 {
         @PartitionKey
         private int k;
@@ -66,6 +68,7 @@ public class MappingConfigurationTransientTest extends CCMTestsSupport {
     }
 
     @Table(name = "foo")
+    @SuppressWarnings({"unused", "WeakerAccess"})
     public static class Foo3 {
         @PartitionKey
         private int k;
@@ -74,12 +77,13 @@ public class MappingConfigurationTransientTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void should_ignore_property_if_declared_transient_in_mapper_configuration() {
-        MappingManager mappingManager = new MappingManager(session());
-        MappingConfiguration configuration = new MappingConfiguration();
-        PropertyScanConfiguration scanConf = new PropertyScanConfiguration();
-        scanConf.setExcludedProperties(ImmutableSet.of("notAColumn"));
-        configuration.setPropertyScanConfiguration(scanConf);
-        mappingManager.mapper(Foo3.class, configuration);
+        MappingConfiguration conf = MappingConfiguration.builder()
+                .withPropertyScanConfiguration(PropertyScanConfiguration.builder()
+                        .addTransientProperties("notAColumn")
+                        .build())
+                .build();
+        MappingManager mappingManager = new MappingManager(session(), conf);
+        mappingManager.mapper(Foo3.class);
     }
 
 
@@ -90,6 +94,7 @@ public class MappingConfigurationTransientTest extends CCMTestsSupport {
     }
 
     @Table(name = "foo")
+    @SuppressWarnings({"unused", "WeakerAccess"})
     public static class Foo4 {
         @PartitionKey
         private int k;

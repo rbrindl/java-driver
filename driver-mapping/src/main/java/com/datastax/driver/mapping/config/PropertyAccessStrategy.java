@@ -39,11 +39,21 @@ public enum PropertyAccessStrategy {
      */
     BOTH;
 
-    boolean isScanFields() {
+    /**
+     * Returns whether this strategy allows property access through fields.
+     *
+     * @return {@code true} if the strategy allows property access through fields, {@code false} otherwise.
+     */
+    public boolean isFieldAccessAllowed() {
         return this == FIELDS || this == BOTH;
     }
 
-    boolean isScanGettersAndSetters() {
+    /**
+     * Returns whether this strategy allows property access through getters and setters.
+     *
+     * @return {@code true} if the strategy allows property access through getters and setters, {@code false} otherwise.
+     */
+    public boolean isGettersAndSettersAccessAllowed() {
         return this == GETTERS_AND_SETTERS || this == BOTH;
     }
 }

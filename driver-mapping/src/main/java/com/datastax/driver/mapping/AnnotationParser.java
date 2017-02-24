@@ -111,7 +111,7 @@ class AnnotationParser {
 
         Map<String, Object[]> fieldsAndProperties = ReflectionUtils.scanFieldsAndProperties(entityClass, configuration.getPropertyScanConfiguration());
         AtomicInteger columnCounter = mappingManager.isCassandraV1 ? null : new AtomicInteger(0);
-        Set<String> classLevelTransients = configuration.getPropertyScanConfiguration().getExcludedProperties();
+        Set<String> transientProperties = configuration.getPropertyScanConfiguration().getTransientProperties();
 
         for (Map.Entry<String, Object[]> entry : fieldsAndProperties.entrySet()) {
 
@@ -122,7 +122,7 @@ class AnnotationParser {
                     ? "col" + columnCounter.incrementAndGet()
                     : null;
 
-            PropertyMapper propertyMapper = new PropertyMapper(entityClass, propertyName, alias, field, property, classLevelTransients, configuration);
+            PropertyMapper propertyMapper = new PropertyMapper(entityClass, propertyName, alias, field, property, transientProperties, configuration);
 
             if (mappingManager.isCassandraV1 && propertyMapper.isComputed())
                 throw new UnsupportedOperationException("Computed properties are not supported with native protocol v1");
@@ -185,7 +185,7 @@ class AnnotationParser {
         Map<String, PropertyMapper> propertyMappers = new HashMap<String, PropertyMapper>();
 
         Map<String, Object[]> fieldsAndProperties = ReflectionUtils.scanFieldsAndProperties(udtClass, configuration.getPropertyScanConfiguration());
-        Set<String> classLevelTransients = configuration.getPropertyScanConfiguration().getExcludedProperties();
+        Set<String> transientProperties = configuration.getPropertyScanConfiguration().getTransientProperties();
 
         for (Map.Entry<String, Object[]> entry : fieldsAndProperties.entrySet()) {
 
@@ -193,7 +193,7 @@ class AnnotationParser {
             java.lang.reflect.Field field = (java.lang.reflect.Field) entry.getValue()[0];
             PropertyDescriptor property = (PropertyDescriptor) entry.getValue()[1];
 
-            PropertyMapper propertyMapper = new PropertyMapper(udtClass, propertyName, null, field, property, classLevelTransients, configuration);
+            PropertyMapper propertyMapper = new PropertyMapper(udtClass, propertyName, null, field, property, transientProperties, configuration);
 
             AnnotationChecks.validateAnnotations(propertyMapper, VALID_FIELD_ANNOTATIONS);
 

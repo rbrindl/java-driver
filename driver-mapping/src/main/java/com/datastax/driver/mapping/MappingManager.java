@@ -76,7 +76,7 @@ public class MappingManager {
      * @since 2.1.7
      */
     public MappingManager(Session session, ProtocolVersion protocolVersion) {
-        this(session, new MappingConfiguration(), protocolVersion);
+        this(session, MappingConfiguration.builder().build(), protocolVersion);
     }
 
     /**
@@ -347,7 +347,6 @@ public class MappingManager {
 
     @SuppressWarnings("unchecked")
     private <T> Mapper<T> getMapper(Class<T> klass, MappingConfiguration configuration) {
-        configuration = new MappingConfiguration(configuration);
         Mapper<T> mapper = (Mapper<T>) mappers.get(klass);
         if (mapper == null) {
             EntityMapper<T> entityMapper = AnnotationParser.parseEntity(klass, this, configuration);
@@ -362,7 +361,6 @@ public class MappingManager {
 
     @SuppressWarnings("unchecked")
     <T> TypeCodec<T> getUDTCodec(Class<T> mappedClass, MappingConfiguration configuration) {
-        configuration = new MappingConfiguration(configuration);
         MappedUDTCodec<T> codec = (MappedUDTCodec<T>) udtCodecs.get(mappedClass);
         if (codec == null) {
             codec = AnnotationParser.parseUDT(mappedClass, this, configuration);
@@ -382,7 +380,6 @@ public class MappingManager {
 
     @SuppressWarnings("unchecked")
     private <T> T getAccessor(Class<T> klass, MappingConfiguration configuration) {
-        configuration = new MappingConfiguration(configuration);
         T accessor = (T) accessors.get(klass);
         if (accessor == null) {
             AccessorMapper<T> mapper = AnnotationParser.parseAccessor(klass, this, configuration);

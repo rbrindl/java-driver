@@ -32,7 +32,7 @@ public class MapperInvalidAnnotationsTest {
     @BeforeClass(groups = "unit")
     public void setup() {
         mappingManager = mock(MappingManager.class);
-        mappingConfiguration = new MappingConfiguration();
+        mappingConfiguration = MappingConfiguration.builder().build();
         Session session = mock(Session.class);
         when(mappingManager.getSession()).thenReturn(session);
         Cluster cluster = mock(Cluster.class);
