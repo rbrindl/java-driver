@@ -15,9 +15,10 @@
  */
 package com.datastax.driver.mapping.config;
 
+import com.google.common.collect.Sets;
+
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -40,7 +41,11 @@ public class PropertyScanConfiguration {
      */
     public static class Builder {
 
-        private Set<String> transientProperties = new HashSet<String>();
+        private Set<String> transientProperties = Sets.newHashSet(
+                "class",
+                // JAVA-1279: exclude Groovy's metaClass property
+                "metaClass"
+        );
 
         private PropertyAccessStrategy propertyAccessStrategy = PropertyAccessStrategy.BOTH;
 
@@ -56,6 +61,11 @@ public class PropertyScanConfiguration {
          * if a more fine-grained tuning is required, it is also possible
          * to use the {@link com.datastax.driver.mapping.annotations.Transient @Transient} annotation
          * on a specific property.
+         * <p/>
+         * The default for this setting is {@code {"class", "metaClass"}}.
+         * These properties pertain to the {@link Object} class –
+         * {@code metaClass} being specific to the Groovy language – so it is not possible
+         * to remove them from the set of excluded properties.
          * <p/>
          * Note that this setting has no effect if the
          * {@link #withPropertyMappingStrategy(PropertyMappingStrategy) property mapping strategy}
@@ -78,6 +88,11 @@ public class PropertyScanConfiguration {
          * if a more fine-grained tuning is required, it is also possible
          * to use the {@link com.datastax.driver.mapping.annotations.Transient @Transient} annotation
          * on a specific property.
+         * <p/>
+         * The default for this setting is {@code {"class", "metaClass"}}.
+         * These properties pertain to the {@link Object} class –
+         * {@code metaClass} being specific to the Groovy language – so it is not possible
+         * to remove them from the set of excluded properties.
          * <p/>
          * Note that this setting has no effect if the
          * {@link #withPropertyMappingStrategy(PropertyMappingStrategy) property mapping strategy}
