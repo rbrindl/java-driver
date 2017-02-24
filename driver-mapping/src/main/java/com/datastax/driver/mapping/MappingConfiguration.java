@@ -41,15 +41,15 @@ import java.util.Set;
  * This is also where you get the configured settings, though those cannot be changed
  * (they are set during the built of the Mapper object).
  */
-public class MapperConfiguration {
+public class MappingConfiguration {
 
     private PropertyScanConfiguration propertyScanConfiguration;
 
-    public MapperConfiguration() {
+    public MappingConfiguration() {
         this.propertyScanConfiguration = new PropertyScanConfiguration();
     }
 
-    public MapperConfiguration(MapperConfiguration toCopy) {
+    public MappingConfiguration(MappingConfiguration toCopy) {
         this.propertyScanConfiguration = new PropertyScanConfiguration(toCopy.propertyScanConfiguration);
     }
 
@@ -68,7 +68,7 @@ public class MapperConfiguration {
      * @param propertyScanConfiguration property scanning configuration to use
      * @return the MapperConfiguration to enable builder pattern
      */
-    public MapperConfiguration setPropertyScanConfiguration(PropertyScanConfiguration propertyScanConfiguration) {
+    public MappingConfiguration setPropertyScanConfiguration(PropertyScanConfiguration propertyScanConfiguration) {
         this.propertyScanConfiguration = propertyScanConfiguration;
         return this;
     }

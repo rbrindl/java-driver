@@ -26,7 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Test for JAVA-1310 - validate ability configure property mapping strategy - whitelist vs. blacklist
  */
-public class MapperConfigurationMappingStrategyTest extends CCMTestsSupport {
+public class MappingConfigurationMappingStrategyTest extends CCMTestsSupport {
 
     @Override
     public void onTestContextInitialized() {
@@ -37,9 +37,9 @@ public class MapperConfigurationMappingStrategyTest extends CCMTestsSupport {
     @Test(groups = "short")
     public void should_map_only_non_transient() {
         MappingManager mappingManager = new MappingManager(session());
-        MapperConfiguration conf = new MapperConfiguration();
-        MapperConfiguration.PropertyScanConfiguration scanConf = new MapperConfiguration.PropertyScanConfiguration();
-        scanConf.setPropertyMappingStrategy(MapperConfiguration.PropertyMappingStrategy.OPT_OUT);
+        MappingConfiguration conf = new MappingConfiguration();
+        MappingConfiguration.PropertyScanConfiguration scanConf = new MappingConfiguration.PropertyScanConfiguration();
+        scanConf.setPropertyMappingStrategy(MappingConfiguration.PropertyMappingStrategy.OPT_OUT);
         conf.setPropertyScanConfiguration(scanConf);
         Mapper<Foo1> mapper = mappingManager.mapper(Foo1.class, conf);
         assertThat(mapper.get(1).getV()).isEqualTo(1);
@@ -76,9 +76,9 @@ public class MapperConfigurationMappingStrategyTest extends CCMTestsSupport {
     @Test(groups = "short")
     public void should_map_only_annotated() {
         MappingManager mappingManager = new MappingManager(session());
-        MapperConfiguration conf = new MapperConfiguration();
-        MapperConfiguration.PropertyScanConfiguration scanConf = new MapperConfiguration.PropertyScanConfiguration();
-        scanConf.setPropertyMappingStrategy(MapperConfiguration.PropertyMappingStrategy.OPT_IN);
+        MappingConfiguration conf = new MappingConfiguration();
+        MappingConfiguration.PropertyScanConfiguration scanConf = new MappingConfiguration.PropertyScanConfiguration();
+        scanConf.setPropertyMappingStrategy(MappingConfiguration.PropertyMappingStrategy.OPT_IN);
         conf.setPropertyScanConfiguration(scanConf);
         mappingManager.mapper(Foo2.class, conf);
     }

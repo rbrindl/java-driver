@@ -33,7 +33,7 @@ public class MappingManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(MappingManager.class);
 
     private final Session session;
-    private final MapperConfiguration defaultConfiguration;
+    private final MappingConfiguration defaultConfiguration;
     final boolean isCassandraV1;
 
     private final ConcurrentHashMap<Class<?>, Mapper<?>> mappers = new ConcurrentHashMap<Class<?>, Mapper<?>>();
@@ -73,7 +73,7 @@ public class MappingManager {
      * @since 2.1.7
      */
     public MappingManager(Session session, ProtocolVersion protocolVersion) {
-        this(session, new MapperConfiguration(), protocolVersion);
+        this(session, new MappingConfiguration(), protocolVersion);
     }
 
     /**
@@ -86,7 +86,7 @@ public class MappingManager {
      * @param session       the {@code Session} to use.
      * @param configuration the {@code MapperConfiguration} to use be used as default for instantiated mappers.
      */
-    public MappingManager(Session session, MapperConfiguration configuration) {
+    public MappingManager(Session session, MappingConfiguration configuration) {
         this(session, configuration, getProtocolVersion(session));
     }
 
@@ -103,7 +103,7 @@ public class MappingManager {
      * @param configuration   the {@code MapperConfiguration} to use be used as default for instantiated mappers.
      * @param protocolVersion the protocol version that will be used with this session.
      */
-    public MappingManager(Session session, MapperConfiguration configuration, ProtocolVersion protocolVersion) {
+    public MappingManager(Session session, MappingConfiguration configuration, ProtocolVersion protocolVersion) {
         this.session = session;
         this.defaultConfiguration = configuration;
         // This is not strictly correct because we could connect to C* 2.0 with the v1 protocol.
@@ -208,7 +208,7 @@ public class MappingManager {
      * method multiple times on the same class will always return the same object.
      * Note that the returned mapper's configuration will be determined by the way it
      * was first created: if it was through this method, it will be the manager's default configuration,
-     * otherwise if it was through {@link #mapper(Class, MapperConfiguration)}, it will be the configuration
+     * otherwise if it was through {@link #mapper(Class, MappingConfiguration)}, it will be the configuration
      * that was passed to that call.
      * <p/>
      * If the type of any field in the class is an {@link UDT}-annotated classes, a codec for that
@@ -244,7 +244,7 @@ public class MappingManager {
      *                      created with another configuration).
      * @return the {@code Mapper} object for class {@code klass}.
      */
-    public <T> Mapper<T> mapper(Class<T> klass, MapperConfiguration configuration) {
+    public <T> Mapper<T> mapper(Class<T> klass, MappingConfiguration configuration) {
         return getMapper(klass, configuration);
     }
 
@@ -264,7 +264,7 @@ public class MappingManager {
      * altered at runtime: in that case, the codec will be replaced automatically.
      * Note that the returned codec's configuration will be determined by the way it
      * was first created: if it was through this method, it will be the manager's default configuration,
-     * otherwise if it was through {@link #udtCodec(Class, MapperConfiguration)}, it will be the configuration
+     * otherwise if it was through {@link #udtCodec(Class, MappingConfiguration)}, it will be the configuration
      * that was passed to that call.
      *
      * @param <T>   the type of the class to map.
@@ -291,7 +291,7 @@ public class MappingManager {
      * altered at runtime: in that case, the codec will be replaced automatically.
      * Note that the returned codec's configuration will be determined by the way it
      * was first created: if it was through this method, it will be the configuration
-     * that was passed to that call, otherwise if it was through {@link #udtCodec(Class, MapperConfiguration)},
+     * that was passed to that call, otherwise if it was through {@link #udtCodec(Class, MappingConfiguration)},
      * it will be the manager's default configuration.
      *
      * @param <T>           the type of the class to map.
@@ -299,7 +299,7 @@ public class MappingManager {
      * @param configuration the configuration to be used.
      * @return the codec that maps the provided class to the corresponding user-defined type.
      */
-    public <T> TypeCodec<T> udtCodec(Class<T> klass, MapperConfiguration configuration) {
+    public <T> TypeCodec<T> udtCodec(Class<T> klass, MappingConfiguration configuration) {
         return getUDTCodec(klass, configuration);
     }
 
@@ -311,7 +311,7 @@ public class MappingManager {
      * method multiple times on the same class will always return the same object.
      * Note that the returned accessor's configuration will be determined by the way it
      * was first created: if it was through this method, it will be the manager's default configuration,
-     * otherwise if it was through {@link #createAccessor(Class, MapperConfiguration)}, it will be the configuration
+     * otherwise if it was through {@link #createAccessor(Class, MappingConfiguration)}, it will be the configuration
      * that was passed to that call.
      *
      * @param <T>   the type of the accessor class.
@@ -338,13 +338,13 @@ public class MappingManager {
      * @param configuration the configuration to be used.
      * @return the accessor object for class {@code klass}.
      */
-    public <T> T createAccessor(Class<T> klass, MapperConfiguration configuration) {
+    public <T> T createAccessor(Class<T> klass, MappingConfiguration configuration) {
         return getAccessor(klass, configuration);
     }
 
     @SuppressWarnings("unchecked")
-    private <T> Mapper<T> getMapper(Class<T> klass, MapperConfiguration configuration) {
-        configuration = new MapperConfiguration(configuration);
+    private <T> Mapper<T> getMapper(Class<T> klass, MappingConfiguration configuration) {
+        configuration = new MappingConfiguration(configuration);
         Mapper<T> mapper = (Mapper<T>) mappers.get(klass);
         if (mapper == null) {
             EntityMapper<T> entityMapper = AnnotationParser.parseEntity(klass, this, configuration);
@@ -358,8 +358,8 @@ public class MappingManager {
     }
 
     @SuppressWarnings("unchecked")
-    <T> TypeCodec<T> getUDTCodec(Class<T> mappedClass, MapperConfiguration configuration) {
-        configuration = new MapperConfiguration(configuration);
+    <T> TypeCodec<T> getUDTCodec(Class<T> mappedClass, MappingConfiguration configuration) {
+        configuration = new MappingConfiguration(configuration);
         MappedUDTCodec<T> codec = (MappedUDTCodec<T>) udtCodecs.get(mappedClass);
         if (codec == null) {
             codec = AnnotationParser.parseUDT(mappedClass, this, configuration);
@@ -378,8 +378,8 @@ public class MappingManager {
     }
 
     @SuppressWarnings("unchecked")
-    private <T> T getAccessor(Class<T> klass, MapperConfiguration configuration) {
-        configuration = new MapperConfiguration(configuration);
+    private <T> T getAccessor(Class<T> klass, MappingConfiguration configuration) {
+        configuration = new MappingConfiguration(configuration);
         T accessor = (T) accessors.get(klass);
         if (accessor == null) {
             AccessorMapper<T> mapper = AnnotationParser.parseAccessor(klass, this, configuration);

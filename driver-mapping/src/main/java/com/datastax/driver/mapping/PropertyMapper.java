@@ -60,14 +60,14 @@ class PropertyMapper {
     private final Method getter;
     private final Method setter;
     private final Map<Class<? extends Annotation>, Annotation> annotations;
-    private final MapperConfiguration mapperConfiguration;
+    private final MappingConfiguration mappingConfiguration;
 
-    PropertyMapper(Class<?> baseClass, String propertyName, String alias, Field field, PropertyDescriptor property, Set<String> classLevelTransients, MapperConfiguration mapperConfiguration) {
+    PropertyMapper(Class<?> baseClass, String propertyName, String alias, Field field, PropertyDescriptor property, Set<String> classLevelTransients, MappingConfiguration mappingConfiguration) {
         this.propertyName = propertyName;
         this.alias = alias;
         this.field = field;
         this.classLevelTransients = classLevelTransients;
-        this.mapperConfiguration = mapperConfiguration;
+        this.mappingConfiguration = mappingConfiguration;
         getter = ReflectionUtils.findGetter(property);
         setter = ReflectionUtils.findSetter(baseClass, property);
         annotations = ReflectionUtils.scanPropertyAnnotations(field, property);
@@ -133,7 +133,7 @@ class PropertyMapper {
     boolean isTransient() {
         // JAVA-1310: Make transient properties configurable at mapper level
         // (should properties be transient by default or not)
-        switch (mapperConfiguration.getPropertyScanConfiguration().getPropertyMappingStrategy()) {
+        switch (mappingConfiguration.getPropertyScanConfiguration().getPropertyMappingStrategy()) {
             case OPT_OUT:
                 return hasAnnotation(Transient.class) ||
                         (this.field != null && Modifier.isTransient(this.field.getModifiers())) ||
@@ -143,7 +143,7 @@ class PropertyMapper {
             case OPT_IN:
                 return !hasColumnAnnotation();
         }
-        throw new IllegalArgumentException("Unhandled PropertyMappingStrategy" + mapperConfiguration.getPropertyScanConfiguration().getPropertyMappingStrategy().name());
+        throw new IllegalArgumentException("Unhandled PropertyMappingStrategy" + mappingConfiguration.getPropertyScanConfiguration().getPropertyMappingStrategy().name());
     }
 
     private boolean hasColumnAnnotation() {

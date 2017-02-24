@@ -32,9 +32,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Static methods that facilitates parsing:
- * - {@link #parseEntity(Class, MappingManager, MapperConfiguration)}: entity classes into {@link EntityMapper} instances
- * - {@link #parseUDT(Class, MappingManager, MapperConfiguration)}: UDT classes into {@link MappedUDTCodec} instances.
- * - {@link #parseAccessor(Class, MappingManager, MapperConfiguration)}: Accessor interfaces into {@link AccessorMapper} instances.
+ * - {@link #parseEntity(Class, MappingManager, MappingConfiguration)}: entity classes into {@link EntityMapper} instances
+ * - {@link #parseUDT(Class, MappingManager, MappingConfiguration)}: UDT classes into {@link MappedUDTCodec} instances.
+ * - {@link #parseAccessor(Class, MappingManager, MappingConfiguration)}: Accessor interfaces into {@link AccessorMapper} instances.
  */
 @SuppressWarnings({"unchecked", "WeakerAccess"})
 class AnnotationParser {
@@ -72,7 +72,7 @@ class AnnotationParser {
     private AnnotationParser() {
     }
 
-    static <T> EntityMapper<T> parseEntity(final Class<T> entityClass, MappingManager mappingManager, MapperConfiguration configuration) {
+    static <T> EntityMapper<T> parseEntity(final Class<T> entityClass, MappingManager mappingManager, MappingConfiguration configuration) {
         Table table = AnnotationChecks.getTypeAnnotation(Table.class, entityClass);
 
         String ksName = table.caseSensitiveKeyspace() ? Metadata.quote(table.keyspace()) : table.keyspace().toLowerCase();
@@ -157,7 +157,7 @@ class AnnotationParser {
         return mapper;
     }
 
-    static <T> MappedUDTCodec<T> parseUDT(Class<T> udtClass, MappingManager mappingManager, MapperConfiguration configuration) {
+    static <T> MappedUDTCodec<T> parseUDT(Class<T> udtClass, MappingManager mappingManager, MappingConfiguration configuration) {
         UDT udt = AnnotationChecks.getTypeAnnotation(UDT.class, udtClass);
 
         String ksName = udt.caseSensitiveKeyspace() ? Metadata.quote(udt.keyspace()) : udt.keyspace().toLowerCase();
@@ -212,7 +212,7 @@ class AnnotationParser {
         return new MappedUDTCodec<T>(userType, udtClass, configuration, propertyMappers, mappingManager);
     }
 
-    static <T> AccessorMapper<T> parseAccessor(Class<T> accClass, MappingManager mappingManager, MapperConfiguration configuration) {
+    static <T> AccessorMapper<T> parseAccessor(Class<T> accClass, MappingManager mappingManager, MappingConfiguration configuration) {
         if (!accClass.isInterface())
             throw new IllegalArgumentException("@Accessor annotation is only allowed on interfaces, got " + accClass);
 
@@ -276,7 +276,7 @@ class AnnotationParser {
         return new AccessorMapper<T>(accClass, methods);
     }
 
-    private static ParamMapper newParamMapper(String className, String methodName, int idx, String paramName, Class<? extends TypeCodec<?>> codecClass, Type paramType, MappingManager mappingManager, MapperConfiguration configuration) {
+    private static ParamMapper newParamMapper(String className, String methodName, int idx, String paramName, Class<? extends TypeCodec<?>> codecClass, Type paramType, MappingManager mappingManager, MappingConfiguration configuration) {
         if (paramType instanceof Class) {
             Class<?> paramClass = (Class<?>) paramType;
             if (TypeMappings.isMappedUDT(paramClass))

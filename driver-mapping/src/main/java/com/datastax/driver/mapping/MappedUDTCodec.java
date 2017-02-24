@@ -29,11 +29,11 @@ import java.util.Map;
 class MappedUDTCodec<T> extends TypeCodec.AbstractUDTCodec<T> {
     private final UserType cqlUserType;
     private final Class<T> udtClass;
-    private final MapperConfiguration configuration;
+    private final MappingConfiguration configuration;
     private final Map<String, PropertyMapper> columnMappers;
     private final CodecRegistry codecRegistry;
 
-    MappedUDTCodec(UserType cqlUserType, Class<T> udtClass, MapperConfiguration configuration, Map<String, PropertyMapper> columnMappers, MappingManager mappingManager) {
+    MappedUDTCodec(UserType cqlUserType, Class<T> udtClass, MappingConfiguration configuration, Map<String, PropertyMapper> columnMappers, MappingManager mappingManager) {
         super(cqlUserType, udtClass);
         this.cqlUserType = cqlUserType;
         this.udtClass = udtClass;
@@ -51,7 +51,7 @@ class MappedUDTCodec<T> extends TypeCodec.AbstractUDTCodec<T> {
         return udtClass;
     }
 
-    MapperConfiguration getConfiguration() {
+    MappingConfiguration getConfiguration() {
         return configuration;
     }
 

@@ -16,12 +16,10 @@
 package com.datastax.driver.mapping;
 
 import com.datastax.driver.core.CCMTestsSupport;
-import com.datastax.driver.mapping.annotations.Column;
 import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.datastax.driver.mapping.annotations.Table;
 import com.datastax.driver.mapping.annotations.Transient;
 import com.google.common.collect.ImmutableSet;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -29,7 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Test for JAVA-1310 - validate ability to transient properties at manager and mapper levels
  */
-public class MapperConfigurationTransientTest extends CCMTestsSupport {
+public class MappingConfigurationTransientTest extends CCMTestsSupport {
 
     @Override
     public void onTestContextInitialized() {
@@ -79,8 +77,8 @@ public class MapperConfigurationTransientTest extends CCMTestsSupport {
     @Test(groups = "short")
     public void should_ignore_property_if_declared_transient_in_mapper_configuration() {
         MappingManager mappingManager = new MappingManager(session());
-        MapperConfiguration configuration = new MapperConfiguration();
-        MapperConfiguration.PropertyScanConfiguration scanConf = new MapperConfiguration.PropertyScanConfiguration();
+        MappingConfiguration configuration = new MappingConfiguration();
+        MappingConfiguration.PropertyScanConfiguration scanConf = new MappingConfiguration.PropertyScanConfiguration();
         scanConf.setExcludedProperties(ImmutableSet.of("notAColumn"));
         configuration.setPropertyScanConfiguration(scanConf);
         mappingManager.mapper(Foo3.class, configuration);
