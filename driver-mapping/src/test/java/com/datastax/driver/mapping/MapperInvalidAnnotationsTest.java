@@ -35,6 +35,7 @@ public class MapperInvalidAnnotationsTest {
         mappingConfiguration = MappingConfiguration.builder().build();
         Session session = mock(Session.class);
         when(mappingManager.getSession()).thenReturn(session);
+        when(mappingManager.getConfiguration()).thenReturn(mappingConfiguration);
         Cluster cluster = mock(Cluster.class);
         when(session.getCluster()).thenReturn(cluster);
         Metadata metadata = mock(Metadata.class);
@@ -60,7 +61,7 @@ public class MapperInvalidAnnotationsTest {
                     "@Table annotation was not found on class " +
                             "com.datastax.driver.mapping.MapperInvalidAnnotationsTest\\$Invalid1")
     public void should_throw_IAE_when_Table_annotation_not_found_on_entity_class() throws Exception {
-        AnnotationParser.parseEntity(Invalid1.class, mappingManager, mappingConfiguration);
+        AnnotationParser.parseEntity(Invalid1.class, mappingManager);
     }
 
     @Test(groups = "unit", expectedExceptions = IllegalArgumentException.class,
@@ -68,7 +69,7 @@ public class MapperInvalidAnnotationsTest {
                     "@UDT annotation was not found on class " +
                             "com.datastax.driver.mapping.MapperInvalidAnnotationsTest\\$Invalid1")
     public void should_throw_IAE_when_UDT_annotation_not_found_on_udt_class() throws Exception {
-        AnnotationParser.parseUDT(Invalid1.class, mappingManager, mappingConfiguration);
+        AnnotationParser.parseUDT(Invalid1.class, mappingManager);
     }
 
     @Table(name = "foo")
@@ -81,7 +82,7 @@ public class MapperInvalidAnnotationsTest {
                     "Cannot have both @Table and @UDT on class " +
                             "com.datastax.driver.mapping.MapperInvalidAnnotationsTest\\$Invalid2")
     public void should_throw_IAE_when_UDT_annotation_found_on_entity_class() throws Exception {
-        AnnotationParser.parseEntity(Invalid2.class, mappingManager, mappingConfiguration);
+        AnnotationParser.parseEntity(Invalid2.class, mappingManager);
     }
 
     @Test(groups = "unit", expectedExceptions = IllegalArgumentException.class,
@@ -89,7 +90,7 @@ public class MapperInvalidAnnotationsTest {
                     "Cannot have both @UDT and @Table on class " +
                             "com.datastax.driver.mapping.MapperInvalidAnnotationsTest\\$Invalid2")
     public void should_throw_IAE_when_Table_annotation_found_on_udt_class() throws Exception {
-        AnnotationParser.parseUDT(Invalid2.class, mappingManager, mappingConfiguration);
+        AnnotationParser.parseUDT(Invalid2.class, mappingManager);
     }
 
     @Table(name = "foo")
@@ -102,7 +103,7 @@ public class MapperInvalidAnnotationsTest {
                     "Cannot have both @Table and @Accessor on class " +
                             "com.datastax.driver.mapping.MapperInvalidAnnotationsTest\\$Invalid3")
     public void should_throw_IAE_when_Accessor_annotation_found_on_entity_class() throws Exception {
-        AnnotationParser.parseEntity(Invalid3.class, mappingManager, mappingConfiguration);
+        AnnotationParser.parseEntity(Invalid3.class, mappingManager);
     }
 
     @UDT(name = "foo")
@@ -115,7 +116,7 @@ public class MapperInvalidAnnotationsTest {
                     "Cannot have both @UDT and @Accessor on class " +
                             "com.datastax.driver.mapping.MapperInvalidAnnotationsTest\\$Invalid4")
     public void should_throw_IAE_when_Accessor_annotation_found_on_udt_class() throws Exception {
-        AnnotationParser.parseUDT(Invalid4.class, mappingManager, mappingConfiguration);
+        AnnotationParser.parseUDT(Invalid4.class, mappingManager);
     }
 
     @Test(groups = "unit", expectedExceptions = IllegalArgumentException.class,
@@ -123,7 +124,7 @@ public class MapperInvalidAnnotationsTest {
                     "@Accessor annotation is only allowed on interfaces, got class " +
                             "com.datastax.driver.mapping.MapperInvalidAnnotationsTest\\$Invalid4")
     public void should_throw_IAE_when_Accessor_annotation_found_on_concrete_class() throws Exception {
-        AnnotationParser.parseAccessor(Invalid4.class, mappingManager, mappingConfiguration);
+        AnnotationParser.parseAccessor(Invalid4.class, mappingManager);
     }
 
     interface Invalid5 {
@@ -134,7 +135,7 @@ public class MapperInvalidAnnotationsTest {
                     "@Accessor annotation was not found on interface " +
                             "com.datastax.driver.mapping.MapperInvalidAnnotationsTest\\$Invalid5")
     public void should_throw_IAE_when_Accessor_annotation_not_found_on_accessor_class() throws Exception {
-        AnnotationParser.parseAccessor(Invalid5.class, mappingManager, mappingConfiguration);
+        AnnotationParser.parseAccessor(Invalid5.class, mappingManager);
     }
 
     @Table(name = "foo")
@@ -147,7 +148,7 @@ public class MapperInvalidAnnotationsTest {
                     "Cannot have both @Accessor and @Table on interface " +
                             "com.datastax.driver.mapping.MapperInvalidAnnotationsTest\\$Invalid6")
     public void should_throw_IAE_when_Table_annotation_found_on_accessor_class() throws Exception {
-        AnnotationParser.parseAccessor(Invalid6.class, mappingManager, mappingConfiguration);
+        AnnotationParser.parseAccessor(Invalid6.class, mappingManager);
     }
 
     @UDT(name = "foo")
@@ -160,7 +161,7 @@ public class MapperInvalidAnnotationsTest {
                     "Cannot have both @Accessor and @UDT on interface " +
                             "com.datastax.driver.mapping.MapperInvalidAnnotationsTest\\$Invalid7")
     public void should_throw_IAE_when_UDT_annotation_found_on_accessor_class() throws Exception {
-        AnnotationParser.parseAccessor(Invalid7.class, mappingManager, mappingConfiguration);
+        AnnotationParser.parseAccessor(Invalid7.class, mappingManager);
     }
 
     @Table(name = "foo", keyspace = "ks")
@@ -173,7 +174,7 @@ public class MapperInvalidAnnotationsTest {
             expectedExceptionsMessageRegExp =
                     "Annotation @Field is not allowed on property 'invalid'")
     public void should_throw_IAE_when_Field_annotation_found_on_entity_class_field() throws Exception {
-        AnnotationParser.parseEntity(Invalid8.class, mappingManager, mappingConfiguration);
+        AnnotationParser.parseEntity(Invalid8.class, mappingManager);
     }
 
     @UDT(name = "foo", keyspace = "ks")
@@ -191,7 +192,7 @@ public class MapperInvalidAnnotationsTest {
             expectedExceptionsMessageRegExp =
                     "Annotation @Column is not allowed on property 'invalid'")
     public void should_throw_IAE_when_Column_annotation_found_on_udt_class_field() throws Exception {
-        AnnotationParser.parseUDT(Invalid9.class, mappingManager, mappingConfiguration);
+        AnnotationParser.parseUDT(Invalid9.class, mappingManager);
     }
 
     @Table(name = "foo", keyspace = "ks")
@@ -207,7 +208,7 @@ public class MapperInvalidAnnotationsTest {
             expectedExceptionsMessageRegExp =
                     "Property 'invalid' cannot be annotated with both @PartitionKey and @ClusteringColumn")
     public void should_throw_IAE_when_PartitionKey_and_ClusteringColumn_on_same_property() throws Exception {
-        AnnotationParser.parseEntity(Invalid10.class, mappingManager, mappingConfiguration);
+        AnnotationParser.parseEntity(Invalid10.class, mappingManager);
     }
 
     @Table(name = "foo", keyspace = "ks")
@@ -223,7 +224,7 @@ public class MapperInvalidAnnotationsTest {
             expectedExceptionsMessageRegExp =
                     "Property 'invalid' cannot be annotated with both @Column and @Computed")
     public void should_throw_IAE_when_Computed_and_Column_on_same_property() throws Exception {
-        AnnotationParser.parseEntity(Invalid11.class, mappingManager, mappingConfiguration);
+        AnnotationParser.parseEntity(Invalid11.class, mappingManager);
     }
 
     @Table(name = "foo", keyspace = "ks")
@@ -238,7 +239,7 @@ public class MapperInvalidAnnotationsTest {
             expectedExceptionsMessageRegExp =
                     "Property 'invalid': attribute 'value' of annotation @Computed is mandatory for computed properties")
     public void should_throw_IAE_when_Computed_with_empty_value() throws Exception {
-        AnnotationParser.parseEntity(Invalid12.class, mappingManager, mappingConfiguration);
+        AnnotationParser.parseEntity(Invalid12.class, mappingManager);
     }
 
     @Table(name = "foo", keyspace = "ks")
@@ -253,7 +254,7 @@ public class MapperInvalidAnnotationsTest {
             expectedExceptionsMessageRegExp =
                     "Invalid ordering value -1 for annotation @PartitionKey of property 'invalid', was expecting 0")
     public void should_throw_IAE_when_PartitionKey_with_wrong_order() throws Exception {
-        AnnotationParser.parseEntity(Invalid13.class, mappingManager, mappingConfiguration);
+        AnnotationParser.parseEntity(Invalid13.class, mappingManager);
     }
 
     @Table(name = "foo", keyspace = "ks")
@@ -268,7 +269,7 @@ public class MapperInvalidAnnotationsTest {
             expectedExceptionsMessageRegExp =
                     "Property 'notReadable' is not readable")
     public void should_throw_IAE_when_unreadable_property() throws Exception {
-        AnnotationParser.parseEntity(Invalid14.class, mappingManager, mappingConfiguration);
+        AnnotationParser.parseEntity(Invalid14.class, mappingManager);
     }
 
     @Table(name = "foo", keyspace = "ks")
@@ -284,7 +285,7 @@ public class MapperInvalidAnnotationsTest {
             expectedExceptionsMessageRegExp =
                     "Property 'notWritable' is not writable")
     public void should_throw_IAE_when_unwritable_property() throws Exception {
-        AnnotationParser.parseEntity(Invalid15.class, mappingManager, mappingConfiguration);
+        AnnotationParser.parseEntity(Invalid15.class, mappingManager);
     }
 
 }

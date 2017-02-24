@@ -18,7 +18,7 @@ package com.datastax.driver.mapping;
 import com.datastax.driver.core.Metadata;
 import com.datastax.driver.core.TypeCodec;
 import com.datastax.driver.mapping.annotations.*;
-import com.datastax.driver.mapping.config.MappingConfiguration;
+import com.datastax.driver.mapping.config.PropertyScanConfiguration;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.reflect.TypeToken;
 
@@ -61,14 +61,14 @@ class PropertyMapper {
     private final Method getter;
     private final Method setter;
     private final Map<Class<? extends Annotation>, Annotation> annotations;
-    private final MappingConfiguration mappingConfiguration;
+    private final PropertyScanConfiguration configuration;
 
-    PropertyMapper(Class<?> baseClass, String propertyName, String alias, Field field, PropertyDescriptor property, Set<String> globalTransientProperties, MappingConfiguration mappingConfiguration) {
+    PropertyMapper(Class<?> baseClass, String propertyName, String alias, Field field, PropertyDescriptor property, Set<String> globalTransientProperties, PropertyScanConfiguration configuration) {
         this.propertyName = propertyName;
         this.alias = alias;
         this.field = field;
         this.globalTransientProperties = globalTransientProperties;
-        this.mappingConfiguration = mappingConfiguration;
+        this.configuration = configuration;
         getter = ReflectionUtils.findGetter(property);
         setter = ReflectionUtils.findSetter(baseClass, property);
         annotations = ReflectionUtils.scanPropertyAnnotations(field, property);
@@ -134,7 +134,7 @@ class PropertyMapper {
     boolean isTransient() {
         // JAVA-1310: Make transient properties configurable at mapper level
         // (should properties be transient by default or not)
-        switch (mappingConfiguration.getPropertyScanConfiguration().getPropertyMappingStrategy()) {
+        switch (configuration.getPropertyMappingStrategy()) {
             case OPT_OUT:
                 return hasAnnotation(Transient.class) ||
                         (this.field != null && Modifier.isTransient(this.field.getModifiers())) ||
@@ -144,7 +144,7 @@ class PropertyMapper {
             case OPT_IN:
                 return !hasColumnAnnotation();
         }
-        throw new IllegalArgumentException("Unhandled PropertyMappingStrategy" + mappingConfiguration.getPropertyScanConfiguration().getPropertyMappingStrategy().name());
+        throw new IllegalArgumentException("Unhandled PropertyMappingStrategy" + configuration.getPropertyMappingStrategy().name());
     }
 
     private boolean hasColumnAnnotation() {

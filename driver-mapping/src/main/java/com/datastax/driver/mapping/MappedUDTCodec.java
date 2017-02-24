@@ -19,7 +19,6 @@ import com.datastax.driver.core.CodecRegistry;
 import com.datastax.driver.core.ProtocolVersion;
 import com.datastax.driver.core.TypeCodec;
 import com.datastax.driver.core.UserType;
-import com.datastax.driver.mapping.config.MappingConfiguration;
 
 import java.nio.ByteBuffer;
 import java.util.Map;
@@ -30,15 +29,13 @@ import java.util.Map;
 class MappedUDTCodec<T> extends TypeCodec.AbstractUDTCodec<T> {
     private final UserType cqlUserType;
     private final Class<T> udtClass;
-    private final MappingConfiguration configuration;
     private final Map<String, PropertyMapper> columnMappers;
     private final CodecRegistry codecRegistry;
 
-    MappedUDTCodec(UserType cqlUserType, Class<T> udtClass, MappingConfiguration configuration, Map<String, PropertyMapper> columnMappers, MappingManager mappingManager) {
+    MappedUDTCodec(UserType cqlUserType, Class<T> udtClass, Map<String, PropertyMapper> columnMappers, MappingManager mappingManager) {
         super(cqlUserType, udtClass);
         this.cqlUserType = cqlUserType;
         this.udtClass = udtClass;
-        this.configuration = configuration;
         this.columnMappers = columnMappers;
         this.codecRegistry = mappingManager.getSession().getCluster().getConfiguration().getCodecRegistry();
     }
@@ -50,10 +47,6 @@ class MappedUDTCodec<T> extends TypeCodec.AbstractUDTCodec<T> {
 
     Class<T> getUdtClass() {
         return udtClass;
-    }
-
-    MappingConfiguration getConfiguration() {
-        return configuration;
     }
 
     @Override

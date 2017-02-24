@@ -36,7 +36,7 @@ public class MappingManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(MappingManager.class);
 
     private final Session session;
-    private final MappingConfiguration defaultConfiguration;
+    private final MappingConfiguration configuration;
     final boolean isCassandraV1;
 
     private final ConcurrentHashMap<Class<?>, Mapper<?>> mappers = new ConcurrentHashMap<Class<?>, Mapper<?>>();
@@ -108,7 +108,7 @@ public class MappingManager {
      */
     public MappingManager(Session session, MappingConfiguration configuration, ProtocolVersion protocolVersion) {
         this.session = session;
-        this.defaultConfiguration = configuration;
+        this.configuration = configuration;
         // This is not strictly correct because we could connect to C* 2.0 with the v1 protocol.
         // But mappers need to make a decision early so that generated queries are compatible, and we don't know in advance
         // which nodes might join the cluster later.
@@ -177,7 +177,7 @@ public class MappingManager {
                     for (MappedUDTCodec<?> deletedCodec : deletedCodecs) {
                         // try to register an updated version of the previous codec
                         try {
-                            getUDTCodec(deletedCodec.getUdtClass(), deletedCodec.getConfiguration());
+                            getUDTCodec(deletedCodec.getUdtClass());
                         } catch (Exception e) {
                             LOGGER.error("Could not update mapping for @UDT annotated " + deletedCodec.getUdtClass(), e);
                         }
@@ -189,9 +189,9 @@ public class MappingManager {
     }
 
     /**
-     * The underlying {@code Session} used by this manager.
+     * The underlying {@link Session} used by this manager.
      * <p/>
-     * Note that you can get obtain the {@code Cluster} object corresponding
+     * Note that you can get obtain the {@link Cluster} object corresponding
      * to that session using {@code getSession().getCluster()}.
      * <p/>
      * It is inadvisable to close the returned Session while this manager and
@@ -204,15 +204,20 @@ public class MappingManager {
     }
 
     /**
+     * Returns the {@link MappingConfiguration configuration} used by this manager.
+     *
+     * @return the {@link MappingConfiguration configuration} used by this manager.
+     */
+    public MappingConfiguration getConfiguration() {
+        return configuration;
+    }
+
+    /**
      * Creates a {@code Mapper} for the provided class (that must be annotated by a
-     * {@link Table} annotation) with this manager's {@code MapperConfiguration}.
+     * {@link Table} annotation).
      * <p/>
      * The {@code MappingManager} only ever keeps one Mapper for each class, and so calling this
      * method multiple times on the same class will always return the same object.
-     * Note that the returned mapper's configuration will be determined by the way it
-     * was first created: if it was through this method, it will be the manager's default configuration,
-     * otherwise if it was through {@link #mapper(Class, MappingConfiguration)}, it will be the configuration
-     * that was passed to that call.
      * <p/>
      * If the type of any field in the class is an {@link UDT}-annotated classes, a codec for that
      * class will automatically be created and registered with the underlying {@code Cluster}.
@@ -223,37 +228,12 @@ public class MappingManager {
      * @return the {@code Mapper} object for class {@code klass}.
      */
     public <T> Mapper<T> mapper(Class<T> klass) {
-        return getMapper(klass, defaultConfiguration);
-    }
-
-    /**
-     * Creates a {@code Mapper} for the provided class (that must be annotated by a
-     * {@link Table} annotation) with the given {@code MapperConfiguration}.
-     * <p/>
-     * The {@code MappingManager} only ever keeps one Mapper for each class, and so calling this
-     * method multiple times on the same class will always return the same object.
-     * Note that the returned mapper's configuration will be determined by the way it
-     * was first created: if it was through this method, it will be the configuration that was passed to
-     * that call, otherwise if it was through {@link #mapper(Class)}, it will be the manager's default
-     * configuration.
-     * <p/>
-     * If the type of any field in the class is an {@link UDT}-annotated classes, a codec for that
-     * class will automatically be created and registered with the underlying {@code Cluster}.
-     * This works recursively with UDTs nested in other UDTs or in collections.
-     *
-     * @param <T>           the type of the class to map.
-     * @param klass         the (annotated) class for which to return the mapper.
-     * @param configuration the configuration to be loaded to the mapper (might be ignored if the mapper was already
-     *                      created with another configuration).
-     * @return the {@code Mapper} object for class {@code klass}.
-     */
-    public <T> Mapper<T> mapper(Class<T> klass, MappingConfiguration configuration) {
-        return getMapper(klass, configuration);
+        return getMapper(klass);
     }
 
     /**
      * Creates a {@code TypeCodec} for the provided class (that must be annotated by
-     * a {@link UDT} annotation) with this manager's {@code MapperConfiguration}.
+     * a {@link UDT} annotation).
      * <p/>
      * This method also registers the codec against the underlying {@code Cluster}.
      * In addition, the codecs for any nested UDTs will also be created and registered.
@@ -261,95 +241,35 @@ public class MappingManager {
      * You don't need to call this method explicitly if you already call {@link #mapper(Class)}
      * for a class that references this UDT class (creating a mapper will automatically
      * process all UDTs that it uses).
-     * <p/>
-     * The {@code MappingManager} only ever keeps one codec for each class; calling this method
-     * multiple times on the same class will return the same object, except if the UDT schema is
-     * altered at runtime: in that case, the codec will be replaced automatically.
-     * Note that the returned codec's configuration will be determined by the way it
-     * was first created: if it was through this method, it will be the manager's default configuration,
-     * otherwise if it was through {@link #udtCodec(Class, MappingConfiguration)}, it will be the configuration
-     * that was passed to that call.
      *
      * @param <T>   the type of the class to map.
      * @param klass the (annotated) class for which to return the codec.
      * @return the codec that maps the provided class to the corresponding user-defined type.
      */
     public <T> TypeCodec<T> udtCodec(Class<T> klass) {
-        return getUDTCodec(klass, defaultConfiguration);
-    }
-
-    /**
-     * Creates a {@code TypeCodec} for the provided class (that must be annotated by
-     * a {@link UDT} annotation) with the given {@code MapperConfiguration}.
-     * <p/>
-     * This method also registers the codec against the underlying {@code Cluster}.
-     * In addition, the codecs for any nested UDTs will also be created and registered.
-     * <p/>
-     * You don't need to call this method explicitly if you already call {@link #mapper(Class)}
-     * for a class that references this UDT class (creating a mapper will automatically
-     * process all UDTs that it uses).
-     * <p/>
-     * The {@code MappingManager} only ever keeps one codec for each class; calling this method
-     * multiple times on the same class will return the same object, except if the UDT schema is
-     * altered at runtime: in that case, the codec will be replaced automatically.
-     * Note that the returned codec's configuration will be determined by the way it
-     * was first created: if it was through this method, it will be the configuration
-     * that was passed to that call, otherwise if it was through {@link #udtCodec(Class, MappingConfiguration)},
-     * it will be the manager's default configuration.
-     *
-     * @param <T>           the type of the class to map.
-     * @param klass         the (annotated) class for which to return the codec.
-     * @param configuration the configuration to be used.
-     * @return the codec that maps the provided class to the corresponding user-defined type.
-     */
-    public <T> TypeCodec<T> udtCodec(Class<T> klass, MappingConfiguration configuration) {
-        return getUDTCodec(klass, configuration);
+        return getUDTCodec(klass);
     }
 
     /**
      * Creates an accessor object based on the provided interface (that must be annotated by
-     * a {@link Accessor} annotation) with this manager's {@code MapperConfiguration}.
+     * a {@link Accessor} annotation).
      * <p/>
      * The {@code MappingManager} only ever keep one Accessor for each class, and so calling this
-     * method multiple times on the same class will always return the same object.
-     * Note that the returned accessor's configuration will be determined by the way it
-     * was first created: if it was through this method, it will be the manager's default configuration,
-     * otherwise if it was through {@link #createAccessor(Class, MappingConfiguration)}, it will be the configuration
-     * that was passed to that call.
+     * method multiple time on the same class will always return the same object.
      *
      * @param <T>   the type of the accessor class.
      * @param klass the (annotated) class for which to create an accessor object.
      * @return the accessor object for class {@code klass}.
      */
     public <T> T createAccessor(Class<T> klass) {
-        return getAccessor(klass, defaultConfiguration);
-    }
-
-    /**
-     * Creates an accessor object based on the provided interface (that must be annotated by
-     * a {@link Accessor} annotation) with the given {@code MapperConfiguration}.
-     * <p/>
-     * The {@code MappingManager} only ever keep one Accessor for each class, and so calling this
-     * method multiple times on the same class will always return the same object.
-     * Note that the returned accessor's configuration will be determined by the way it
-     * was first created: if it was through this method, it will be the configuration that was passed to
-     * that call, otherwise if it was through {@link #createAccessor(Class)}, it will be the manager's default
-     * configuration.
-     *
-     * @param <T>           the type of the accessor class.
-     * @param klass         the (annotated) class for which to create an accessor object.
-     * @param configuration the configuration to be used.
-     * @return the accessor object for class {@code klass}.
-     */
-    public <T> T createAccessor(Class<T> klass, MappingConfiguration configuration) {
-        return getAccessor(klass, configuration);
+        return getAccessor(klass);
     }
 
     @SuppressWarnings("unchecked")
-    private <T> Mapper<T> getMapper(Class<T> klass, MappingConfiguration configuration) {
+    private <T> Mapper<T> getMapper(Class<T> klass) {
         Mapper<T> mapper = (Mapper<T>) mappers.get(klass);
         if (mapper == null) {
-            EntityMapper<T> entityMapper = AnnotationParser.parseEntity(klass, this, configuration);
+            EntityMapper<T> entityMapper = AnnotationParser.parseEntity(klass, this);
             mapper = new Mapper<T>(this, klass, entityMapper);
             Mapper<T> old = (Mapper<T>) mappers.putIfAbsent(klass, mapper);
             if (old != null) {
@@ -360,10 +280,10 @@ public class MappingManager {
     }
 
     @SuppressWarnings("unchecked")
-    <T> TypeCodec<T> getUDTCodec(Class<T> mappedClass, MappingConfiguration configuration) {
+    <T> TypeCodec<T> getUDTCodec(Class<T> mappedClass) {
         MappedUDTCodec<T> codec = (MappedUDTCodec<T>) udtCodecs.get(mappedClass);
         if (codec == null) {
-            codec = AnnotationParser.parseUDT(mappedClass, this, configuration);
+            codec = AnnotationParser.parseUDT(mappedClass, this);
             session.getCluster().getConfiguration().getCodecRegistry().register(codec);
             MappedUDTCodec<T> old = (MappedUDTCodec<T>) udtCodecs.putIfAbsent(mappedClass, codec);
             if (old != null) {
@@ -373,16 +293,11 @@ public class MappingManager {
         return codec;
     }
 
-
-    <T> TypeCodec<T> getUDTCodec(Class<T> mappedClass) {
-        return getUDTCodec(mappedClass, defaultConfiguration);
-    }
-
     @SuppressWarnings("unchecked")
-    private <T> T getAccessor(Class<T> klass, MappingConfiguration configuration) {
+    private <T> T getAccessor(Class<T> klass) {
         T accessor = (T) accessors.get(klass);
         if (accessor == null) {
-            AccessorMapper<T> mapper = AnnotationParser.parseAccessor(klass, this, configuration);
+            AccessorMapper<T> mapper = AnnotationParser.parseAccessor(klass, this);
             mapper.prepare(this);
             accessor = mapper.createProxy();
             T old = (T) accessors.putIfAbsent(klass, accessor);

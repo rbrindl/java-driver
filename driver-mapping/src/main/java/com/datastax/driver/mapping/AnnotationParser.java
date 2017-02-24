@@ -18,7 +18,7 @@ package com.datastax.driver.mapping;
 import com.datastax.driver.core.*;
 import com.datastax.driver.mapping.MethodMapper.ParamMapper;
 import com.datastax.driver.mapping.annotations.*;
-import com.datastax.driver.mapping.config.MappingConfiguration;
+import com.datastax.driver.mapping.config.PropertyScanConfiguration;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.reflect.TypeToken;
@@ -33,9 +33,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Static methods that facilitates parsing:
- * - {@link #parseEntity(Class, MappingManager, MappingConfiguration)}: entity classes into {@link EntityMapper} instances
- * - {@link #parseUDT(Class, MappingManager, MappingConfiguration)}: UDT classes into {@link MappedUDTCodec} instances.
- * - {@link #parseAccessor(Class, MappingManager, MappingConfiguration)}: Accessor interfaces into {@link AccessorMapper} instances.
+ * - {@link #parseEntity(Class, MappingManager)}: entity classes into {@link EntityMapper} instances
+ * - {@link #parseUDT(Class, MappingManager)}: UDT classes into {@link MappedUDTCodec} instances.
+ * - {@link #parseAccessor(Class, MappingManager)}: Accessor interfaces into {@link AccessorMapper} instances.
  */
 @SuppressWarnings({"unchecked", "WeakerAccess"})
 class AnnotationParser {
@@ -73,7 +73,7 @@ class AnnotationParser {
     private AnnotationParser() {
     }
 
-    static <T> EntityMapper<T> parseEntity(final Class<T> entityClass, MappingManager mappingManager, MappingConfiguration configuration) {
+    static <T> EntityMapper<T> parseEntity(final Class<T> entityClass, MappingManager mappingManager) {
         Table table = AnnotationChecks.getTypeAnnotation(Table.class, entityClass);
 
         String ksName = table.caseSensitiveKeyspace() ? Metadata.quote(table.keyspace()) : table.keyspace().toLowerCase();
@@ -109,9 +109,10 @@ class AnnotationParser {
         List<PropertyMapper> ccs = new ArrayList<PropertyMapper>();
         List<PropertyMapper> rgs = new ArrayList<PropertyMapper>();
 
-        Map<String, Object[]> fieldsAndProperties = ReflectionUtils.scanFieldsAndProperties(entityClass, configuration.getPropertyScanConfiguration());
+        PropertyScanConfiguration propertyScanConfiguration = mappingManager.getConfiguration().getPropertyScanConfiguration();
+        Map<String, Object[]> fieldsAndProperties = ReflectionUtils.scanFieldsAndProperties(entityClass, propertyScanConfiguration);
         AtomicInteger columnCounter = mappingManager.isCassandraV1 ? null : new AtomicInteger(0);
-        Set<String> transientProperties = configuration.getPropertyScanConfiguration().getTransientProperties();
+        Set<String> transientProperties = propertyScanConfiguration.getTransientProperties();
 
         for (Map.Entry<String, Object[]> entry : fieldsAndProperties.entrySet()) {
 
@@ -122,7 +123,7 @@ class AnnotationParser {
                     ? "col" + columnCounter.incrementAndGet()
                     : null;
 
-            PropertyMapper propertyMapper = new PropertyMapper(entityClass, propertyName, alias, field, property, transientProperties, configuration);
+            PropertyMapper propertyMapper = new PropertyMapper(entityClass, propertyName, alias, field, property, transientProperties, propertyScanConfiguration);
 
             if (mappingManager.isCassandraV1 && propertyMapper.isComputed())
                 throw new UnsupportedOperationException("Computed properties are not supported with native protocol v1");
@@ -145,7 +146,7 @@ class AnnotationParser {
 
             // if the property is of a UDT type, parse it now
             for (Class<?> udt : TypeMappings.findUDTs(propertyMapper.javaType.getType()))
-                mappingManager.getUDTCodec(udt, configuration);
+                mappingManager.getUDTCodec(udt);
         }
 
         Collections.sort(pks, POSITION_COMPARATOR);
@@ -158,7 +159,7 @@ class AnnotationParser {
         return mapper;
     }
 
-    static <T> MappedUDTCodec<T> parseUDT(Class<T> udtClass, MappingManager mappingManager, MappingConfiguration configuration) {
+    static <T> MappedUDTCodec<T> parseUDT(Class<T> udtClass, MappingManager mappingManager) {
         UDT udt = AnnotationChecks.getTypeAnnotation(UDT.class, udtClass);
 
         String ksName = udt.caseSensitiveKeyspace() ? Metadata.quote(udt.keyspace()) : udt.keyspace().toLowerCase();
@@ -184,8 +185,9 @@ class AnnotationParser {
 
         Map<String, PropertyMapper> propertyMappers = new HashMap<String, PropertyMapper>();
 
-        Map<String, Object[]> fieldsAndProperties = ReflectionUtils.scanFieldsAndProperties(udtClass, configuration.getPropertyScanConfiguration());
-        Set<String> transientProperties = configuration.getPropertyScanConfiguration().getTransientProperties();
+        PropertyScanConfiguration propertyScanConfiguration = mappingManager.getConfiguration().getPropertyScanConfiguration();
+        Map<String, Object[]> fieldsAndProperties = ReflectionUtils.scanFieldsAndProperties(udtClass, propertyScanConfiguration);
+        Set<String> transientProperties = propertyScanConfiguration.getTransientProperties();
 
         for (Map.Entry<String, Object[]> entry : fieldsAndProperties.entrySet()) {
 
@@ -193,7 +195,7 @@ class AnnotationParser {
             java.lang.reflect.Field field = (java.lang.reflect.Field) entry.getValue()[0];
             PropertyDescriptor property = (PropertyDescriptor) entry.getValue()[1];
 
-            PropertyMapper propertyMapper = new PropertyMapper(udtClass, propertyName, null, field, property, transientProperties, configuration);
+            PropertyMapper propertyMapper = new PropertyMapper(udtClass, propertyName, null, field, property, transientProperties, propertyScanConfiguration);
 
             AnnotationChecks.validateAnnotations(propertyMapper, VALID_FIELD_ANNOTATIONS);
 
@@ -205,15 +207,15 @@ class AnnotationParser {
                         propertyMapper.columnName, ksName, userType.getTypeName()));
 
             for (Class<?> fieldUdt : TypeMappings.findUDTs(propertyMapper.javaType.getType()))
-                mappingManager.getUDTCodec(fieldUdt, configuration);
+                mappingManager.getUDTCodec(fieldUdt);
 
             propertyMappers.put(propertyMapper.columnName, propertyMapper);
         }
 
-        return new MappedUDTCodec<T>(userType, udtClass, configuration, propertyMappers, mappingManager);
+        return new MappedUDTCodec<T>(userType, udtClass, propertyMappers, mappingManager);
     }
 
-    static <T> AccessorMapper<T> parseAccessor(Class<T> accClass, MappingManager mappingManager, MappingConfiguration configuration) {
+    static <T> AccessorMapper<T> parseAccessor(Class<T> accClass, MappingManager mappingManager) {
         if (!accClass.isInterface())
             throw new IllegalArgumentException("@Accessor annotation is only allowed on interfaces, got " + accClass);
 
@@ -252,7 +254,7 @@ class AnnotationParser {
                 else if (allParamsNamed != thisParamNamed)
                     throw new IllegalArgumentException(String.format("For method '%s', either all or none of the parameters must be named", m.getName()));
 
-                paramMappers[i] = newParamMapper(accClass.getName(), m.getName(), i, paramName, codecClass, paramTypes[i], mappingManager, configuration);
+                paramMappers[i] = newParamMapper(accClass.getName(), m.getName(), i, paramName, codecClass, paramTypes[i], mappingManager);
             }
 
             ConsistencyLevel cl = null;
@@ -277,16 +279,16 @@ class AnnotationParser {
         return new AccessorMapper<T>(accClass, methods);
     }
 
-    private static ParamMapper newParamMapper(String className, String methodName, int idx, String paramName, Class<? extends TypeCodec<?>> codecClass, Type paramType, MappingManager mappingManager, MappingConfiguration configuration) {
+    private static ParamMapper newParamMapper(String className, String methodName, int idx, String paramName, Class<? extends TypeCodec<?>> codecClass, Type paramType, MappingManager mappingManager) {
         if (paramType instanceof Class) {
             Class<?> paramClass = (Class<?>) paramType;
             if (TypeMappings.isMappedUDT(paramClass))
-                mappingManager.getUDTCodec(paramClass, configuration);
+                mappingManager.getUDTCodec(paramClass);
 
             return new ParamMapper(paramName, idx, TypeToken.of(paramType), codecClass);
         } else if (paramType instanceof ParameterizedType) {
             for (Class<?> udt : TypeMappings.findUDTs(paramType))
-                mappingManager.getUDTCodec(udt, configuration);
+                mappingManager.getUDTCodec(udt);
 
             return new ParamMapper(paramName, idx, TypeToken.of(paramType), codecClass);
         } else {
