@@ -57,17 +57,17 @@ class PropertyMapper {
     final int position;
 
     private final Field field;
-    private final Set<String> classLevelTransients;
+    private final Set<String> globalTransientProperties;
     private final Method getter;
     private final Method setter;
     private final Map<Class<? extends Annotation>, Annotation> annotations;
     private final MappingConfiguration mappingConfiguration;
 
-    PropertyMapper(Class<?> baseClass, String propertyName, String alias, Field field, PropertyDescriptor property, Set<String> classLevelTransients, MappingConfiguration mappingConfiguration) {
+    PropertyMapper(Class<?> baseClass, String propertyName, String alias, Field field, PropertyDescriptor property, Set<String> globalTransientProperties, MappingConfiguration mappingConfiguration) {
         this.propertyName = propertyName;
         this.alias = alias;
         this.field = field;
-        this.classLevelTransients = classLevelTransients;
+        this.globalTransientProperties = globalTransientProperties;
         this.mappingConfiguration = mappingConfiguration;
         getter = ReflectionUtils.findGetter(property);
         setter = ReflectionUtils.findSetter(baseClass, property);
@@ -140,7 +140,7 @@ class PropertyMapper {
                         (this.field != null && Modifier.isTransient(this.field.getModifiers())) ||
                         // If a property is both annotated and declared as transient in the class annotation, the property
                         // annotations take precedence (the property will not be transient)
-                        classLevelTransients.contains(propertyName) && !hasColumnAnnotation();
+                        globalTransientProperties.contains(propertyName) && !hasColumnAnnotation();
             case OPT_IN:
                 return !hasColumnAnnotation();
         }
