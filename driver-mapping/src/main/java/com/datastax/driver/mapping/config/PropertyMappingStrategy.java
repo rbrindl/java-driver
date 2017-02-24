@@ -21,14 +21,19 @@ package com.datastax.driver.mapping.config;
 public enum PropertyMappingStrategy {
 
     /**
-     * Unless a property is explicitly {@code transient} or annotated with {@code Transient}, it will be mapped.
+     * Unless a property is explicitly {@code transient} or annotated with
+     * {@link com.datastax.driver.mapping.annotations.Transient @Transient},
+     * it will be mapped. This strategy is the default.
      */
     OPT_OUT,
 
     /**
-     * A property will only be mapped if it is explicitly annotated with either {@code PartitionKey},
-     * {@code ClusteringColumn}, {@code Column}, {@code com.datastax.driver.mapping.annotations.Field} or
-     * {@code Computed}.
+     * A property will only be mapped if it is explicitly annotated with either
+     * {@link com.datastax.driver.mapping.annotations.PartitionKey @PartitionKey},
+     * {@link com.datastax.driver.mapping.annotations.ClusteringColumn @ClusteringColumn},
+     * {@link com.datastax.driver.mapping.annotations.Column @Column},
+     * {@link com.datastax.driver.mapping.annotations.Field @Field} or
+     * {@link com.datastax.driver.mapping.annotations.Computed @Computed}.
      */
     OPT_IN
 
