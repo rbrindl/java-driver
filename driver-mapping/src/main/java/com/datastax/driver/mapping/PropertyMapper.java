@@ -25,6 +25,7 @@ import java.beans.PropertyDescriptor;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.Map;
@@ -135,6 +136,7 @@ class PropertyMapper {
         switch (mapperConfiguration.getPropertyScanConfiguration().getPropertyMappingStrategy()) {
             case OPT_OUT:
                 return hasAnnotation(Transient.class) ||
+                        (this.field != null && Modifier.isTransient(this.field.getModifiers())) ||
                         // If a property is both annotated and declared as transient in the class annotation, the property
                         // annotations take precedence (the property will not be transient)
                         classLevelTransients.contains(propertyName) && !hasColumnAnnotation();

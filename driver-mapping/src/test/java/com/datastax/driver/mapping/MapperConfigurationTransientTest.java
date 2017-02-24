@@ -86,11 +86,17 @@ public class MapperConfigurationTransientTest extends CCMTestsSupport {
         mappingManager.mapper(Foo3.class, configuration);
     }
 
+
+    @Test(groups = "short")
+    public void should_ignore_property_if_field_has_transient_modifier() {
+        MappingManager mappingManager = new MappingManager(session());
+        mappingManager.mapper(Foo4.class);
+    }
+
     @Table(name = "foo")
     public static class Foo4 {
         @PartitionKey
         private int k;
-        private int notAColumn;
+        private transient int notAColumn;
     }
-
 }
