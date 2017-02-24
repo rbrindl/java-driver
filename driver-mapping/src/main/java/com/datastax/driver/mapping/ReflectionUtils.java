@@ -15,11 +15,9 @@
  */
 package com.datastax.driver.mapping;
 
-import com.datastax.driver.mapping.annotations.Accessor;
-import com.datastax.driver.mapping.annotations.Table;
-import com.datastax.driver.mapping.annotations.UDT;
+import com.datastax.driver.mapping.config.HierarchyScanStrategy;
+import com.datastax.driver.mapping.config.PropertyScanConfiguration;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableSet;
 
 import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
@@ -27,7 +25,10 @@ import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Utility methods related to reflection.

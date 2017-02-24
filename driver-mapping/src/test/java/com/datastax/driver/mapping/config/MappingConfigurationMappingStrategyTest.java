@@ -13,9 +13,11 @@
  *   See the License for the specific language governing permissions and
  *   limitations under the License.
  */
-package com.datastax.driver.mapping;
+package com.datastax.driver.mapping.config;
 
 import com.datastax.driver.core.CCMTestsSupport;
+import com.datastax.driver.mapping.Mapper;
+import com.datastax.driver.mapping.MappingManager;
 import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.datastax.driver.mapping.annotations.Table;
 import com.datastax.driver.mapping.annotations.Transient;
@@ -38,8 +40,8 @@ public class MappingConfigurationMappingStrategyTest extends CCMTestsSupport {
     public void should_map_only_non_transient() {
         MappingManager mappingManager = new MappingManager(session());
         MappingConfiguration conf = new MappingConfiguration();
-        MappingConfiguration.PropertyScanConfiguration scanConf = new MappingConfiguration.PropertyScanConfiguration();
-        scanConf.setPropertyMappingStrategy(MappingConfiguration.PropertyMappingStrategy.OPT_OUT);
+        PropertyScanConfiguration scanConf = new PropertyScanConfiguration();
+        scanConf.setPropertyMappingStrategy(PropertyMappingStrategy.OPT_OUT);
         conf.setPropertyScanConfiguration(scanConf);
         Mapper<Foo1> mapper = mappingManager.mapper(Foo1.class, conf);
         assertThat(mapper.get(1).getV()).isEqualTo(1);
@@ -77,8 +79,8 @@ public class MappingConfigurationMappingStrategyTest extends CCMTestsSupport {
     public void should_map_only_annotated() {
         MappingManager mappingManager = new MappingManager(session());
         MappingConfiguration conf = new MappingConfiguration();
-        MappingConfiguration.PropertyScanConfiguration scanConf = new MappingConfiguration.PropertyScanConfiguration();
-        scanConf.setPropertyMappingStrategy(MappingConfiguration.PropertyMappingStrategy.OPT_IN);
+        PropertyScanConfiguration scanConf = new PropertyScanConfiguration();
+        scanConf.setPropertyMappingStrategy(PropertyMappingStrategy.OPT_IN);
         conf.setPropertyScanConfiguration(scanConf);
         mappingManager.mapper(Foo2.class, conf);
     }

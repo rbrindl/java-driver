@@ -13,16 +13,14 @@
  *   See the License for the specific language governing permissions and
  *   limitations under the License.
  */
-package com.datastax.driver.mapping;
+package com.datastax.driver.mapping.config;
 
 import com.datastax.driver.core.CCMTestsSupport;
+import com.datastax.driver.mapping.MappingManager;
 import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.datastax.driver.mapping.annotations.Table;
 import com.datastax.driver.mapping.annotations.Transient;
-import com.google.common.collect.ImmutableSet;
 import org.testng.annotations.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Test for JAVA-1310 - validate ability to transient properties at manager and mapper levels
@@ -78,7 +76,7 @@ public class MappingConfigurationTransientTest extends CCMTestsSupport {
     public void should_ignore_property_if_declared_transient_in_mapper_configuration() {
         MappingManager mappingManager = new MappingManager(session());
         MappingConfiguration configuration = new MappingConfiguration();
-        MappingConfiguration.PropertyScanConfiguration scanConf = new MappingConfiguration.PropertyScanConfiguration();
+        PropertyScanConfiguration scanConf = new PropertyScanConfiguration();
         scanConf.setExcludedProperties(ImmutableSet.of("notAColumn"));
         configuration.setPropertyScanConfiguration(scanConf);
         mappingManager.mapper(Foo3.class, configuration);

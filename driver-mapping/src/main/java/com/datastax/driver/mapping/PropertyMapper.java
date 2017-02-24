@@ -18,6 +18,7 @@ package com.datastax.driver.mapping;
 import com.datastax.driver.core.Metadata;
 import com.datastax.driver.core.TypeCodec;
 import com.datastax.driver.mapping.annotations.*;
+import com.datastax.driver.mapping.config.MappingConfiguration;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.reflect.TypeToken;
 

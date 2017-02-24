@@ -19,6 +19,7 @@ import com.datastax.driver.core.CodecRegistry;
 import com.datastax.driver.core.ProtocolVersion;
 import com.datastax.driver.core.TypeCodec;
 import com.datastax.driver.core.UserType;
+import com.datastax.driver.mapping.config.MappingConfiguration;
 
 import java.nio.ByteBuffer;
 import java.util.Map;
