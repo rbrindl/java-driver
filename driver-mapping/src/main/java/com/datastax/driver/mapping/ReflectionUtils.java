@@ -183,7 +183,7 @@ class ReflectionUtils {
         }
         // 2. Class hierarchy: check for annotations in overridden methods in superclasses
         Class<?> getterClass = method.getDeclaringClass();
-        for (Class<?> clazz = getterClass.getSuperclass(); !clazz.equals(Object.class); clazz = clazz.getSuperclass()) {
+        for (Class<?> clazz = getterClass.getSuperclass(); clazz != null && !clazz.equals(Object.class); clazz = clazz.getSuperclass()) {
             maybeAddOverriddenMethodAnnotations(annotations, method, clazz);
         }
         // 3. Interfaces: check for annotations in implemented interfaces

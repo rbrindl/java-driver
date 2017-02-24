@@ -15,7 +15,6 @@
  */
 package com.datastax.driver.mapping;
 
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -252,7 +251,9 @@ public class MapperConfiguration {
         private Class<?> deepestAllowedAncestor;
 
         public HierarchyScanStrategy() {
-            this.hierarchyScanEnabled = true;
+            // scanning temporarily disabled to avoid problem with Object.getClass()
+            // TODO when we migrate this to a single field in PropertyScanConfiguration, consider making the default "up to, but excluding Object"
+            this.hierarchyScanEnabled = false;
             this.scanOnlyAnnotatedClasses = false;
             this.deepestAllowedAncestor = Object.class;
         }
