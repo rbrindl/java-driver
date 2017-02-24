@@ -35,12 +35,6 @@ import java.util.Map;
  */
 class ReflectionUtils {
 
-    private static final Set<Class<? extends Annotation>> SUPPORTED_CLASS_ANNOTATIONS = ImmutableSet.of(
-            Table.class,
-            UDT.class,
-            Accessor.class
-    );
-
     static <T> T newInstance(Class<T> clazz) {
         Constructor<T> publicConstructor;
         try {
@@ -143,18 +137,8 @@ class ReflectionUtils {
         if (!scanStrategy.isHierarchyScanEnabled()) {
             return baseClass.getSuperclass();
         }
-        // if scan is enabled, stop at parent of deepest ancestor allowed
-        Class<?> deepestAllowedAncestor = scanStrategy.getDeepestAllowedAncestor();
-        return deepestAllowedAncestor == null ? null : deepestAllowedAncestor.getSuperclass();
-    }
-
-    private static boolean isClassAnnotated(Class<?> clazz) {
-        for (Class<? extends Annotation> supportedClassAnnotation : SUPPORTED_CLASS_ANNOTATIONS) {
-            if (clazz.getAnnotation(supportedClassAnnotation) != null) {
-                return true;
-            }
-        }
-        return false;
+        // if scan is enabled, stop at parent of nearest excluded ancestor.
+        return scanStrategy.getNearestExcludedAncestor();
     }
 
     static Map<Class<? extends Annotation>, Annotation> scanPropertyAnnotations(Field field, PropertyDescriptor property) {
