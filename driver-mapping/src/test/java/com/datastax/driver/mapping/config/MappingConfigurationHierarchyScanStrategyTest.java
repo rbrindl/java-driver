@@ -28,8 +28,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Test for JAVA-1310 - validate ability configure ancestor property scanning:
  * - disable
- * - force class annotations
- * - configure max depth ancestor
+ * - configure max depth ancestor (included or not)
  */
 public class MappingConfigurationHierarchyScanStrategyTest extends CCMTestsSupport {
 
@@ -40,12 +39,10 @@ public class MappingConfigurationHierarchyScanStrategyTest extends CCMTestsSuppo
     }
 
     @Test(groups = "short")
-    public void should_not_inherit_properties() {
+    public void should_not_inherit_annotations_when_hierarchy_scan_disabled() {
         MappingConfiguration conf = MappingConfiguration.builder()
                 .withPropertyScanConfiguration(PropertyScanConfiguration.builder()
-                        .withHierarchyScanStrategy(HierarchyScanStrategy.builder()
-                                .withHierarchyScanEnabled(false)
-                                .build())
+                        .withHierarchyScanStrategy(HierarchyScanStrategy.DISABLED)
                         .build())
                 .build();
         MappingManager mappingManager = new MappingManager(session(), conf);
@@ -78,11 +75,25 @@ public class MappingConfigurationHierarchyScanStrategyTest extends CCMTestsSuppo
     }
 
     @Test(groups = "short")
-    public void should_inherit_only_boo() {
+    public void should_inherit_annotations_up_to_highest_ancestor_exluded() {
         MappingConfiguration conf = MappingConfiguration.builder()
                 .withPropertyScanConfiguration(PropertyScanConfiguration.builder()
                         .withHierarchyScanStrategy(HierarchyScanStrategy.builder()
-                                .withNearestExcludedAncestor(Goo2.class)
+                                .withHighestAncestor(Goo2.class, false)
+                                .build())
+                        .build())
+                .build();
+        MappingManager mappingManager = new MappingManager(session(), conf);
+        Mapper<Foo2> mapper = mappingManager.mapper(Foo2.class);
+        assertThat(mapper.get(1).getV()).isEqualTo(1);
+    }
+
+    @Test(groups = "short")
+    public void should_inherit_annotations_up_to_highest_ancestor_included() {
+        MappingConfiguration conf = MappingConfiguration.builder()
+                .withPropertyScanConfiguration(PropertyScanConfiguration.builder()
+                        .withHierarchyScanStrategy(HierarchyScanStrategy.builder()
+                                .withHighestAncestor(Boo2.class, true)
                                 .build())
                         .build())
                 .build();

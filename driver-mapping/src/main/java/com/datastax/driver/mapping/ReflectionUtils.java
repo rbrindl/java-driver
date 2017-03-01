@@ -125,20 +125,21 @@ class ReflectionUtils {
         // (scan the whole hierarchy, or just annotated classes)
         List<Class<?>> classesToScan = new ArrayList<Class<?>>();
         HierarchyScanStrategy scanStrategy = scanConfiguration.getHierarchyScanStrategy();
-        Class<?> stopCondition = calculateStopConditionClass(baseClass, scanStrategy);
-        for (Class<?> clazz = baseClass; clazz != null && !clazz.equals(stopCondition); clazz = clazz.getSuperclass()) {
+        Class<?> highestAncestor = scanStrategy.getHighestAncestor();
+        boolean include = scanStrategy.includeHighestAncestor();
+        if (highestAncestor == null) {
+            highestAncestor = baseClass.getSuperclass();
+            include = false;
+        }
+        for (Class<?> clazz = baseClass; clazz != null; clazz = clazz.getSuperclass()) {
+            if (!clazz.equals(highestAncestor) || include) {
                 classesToScan.add(clazz);
+            }
+            if (clazz.equals(highestAncestor)) {
+                break;
+            }
         }
         return classesToScan;
-    }
-
-    private static Class<?> calculateStopConditionClass(Class<?> baseClass, HierarchyScanStrategy scanStrategy) {
-        // if scan is not enabled, stop at first parent
-        if (!scanStrategy.isHierarchyScanEnabled()) {
-            return baseClass.getSuperclass();
-        }
-        // if scan is enabled, stop at parent of nearest excluded ancestor.
-        return scanStrategy.getNearestExcludedAncestor();
     }
 
     static Map<Class<? extends Annotation>, Annotation> scanPropertyAnnotations(Field field, PropertyDescriptor property) {

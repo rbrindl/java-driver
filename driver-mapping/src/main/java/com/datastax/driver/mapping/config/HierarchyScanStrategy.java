@@ -16,9 +16,14 @@
 package com.datastax.driver.mapping.config;
 
 /**
- * A strategy to determine how ancestors of annotated classes are mapped.
+ * A strategy to determine how ancestors of mapped classes are scanned for annotations.
  */
 public class HierarchyScanStrategy {
+
+    /**
+     * An instance that disables hierarchy scanning completely.
+     */
+    public static HierarchyScanStrategy DISABLED = new HierarchyScanStrategy(null, false);
 
     /**
      * Returns a new {@link HierarchyScanStrategy.Builder} instance.
@@ -34,34 +39,20 @@ public class HierarchyScanStrategy {
      */
     public static class Builder {
 
-        private boolean hierarchyScanEnabled = true;
-
-        private Class<?> nearestExcludedAncestor = Object.class;
-
-        /**
-         * Sets whether or not the strategy allows scanning of ancestors
-         * of annotated classes.
-         * The default is {@code true}.
-         *
-         * @return this {@link Builder} instance (to allow for fluent builder pattern).
-         */
-        public Builder withHierarchyScanEnabled(boolean hierarchyScanEnabled) {
-            this.hierarchyScanEnabled = hierarchyScanEnabled;
-            return this;
-        }
+        private Class<?> highestAncestor = Object.class;
+        private boolean includeHighestAncestor = false;
 
         /**
-         * Sets the nearest ancestor of any annotated class that should be prevented from mapping.
+         * Sets the highest ancestor that will be scanned for mapping annotations.
          * <p/>
-         * This class and all its ancestors will be excluded from class hierarchy scan.
+         * If this method is not called, the default is to scan up to {@code Object}, excluded (the equivalent of
+         * {@code withHighestAncestor(Object.class, false)}).
          * <p/>
-         * The default is {@code Object.class}, which means that the entire class hierarchy is
-         * scanned for mapped properties.
-         *
-         * @return this {@link Builder} instance (to allow for fluent builder pattern).
+         * To disable hierarchy scanning, use {@link #DISABLED}.
          */
-        public Builder withNearestExcludedAncestor(Class<?> nearestExcludedAncestor) {
-            this.nearestExcludedAncestor = nearestExcludedAncestor;
+        public Builder withHighestAncestor(Class<?> highestAncestor, boolean included) {
+            this.highestAncestor = highestAncestor;
+            this.includeHighestAncestor = included;
             return this;
         }
 
@@ -72,42 +63,34 @@ public class HierarchyScanStrategy {
          * @return a new instance of {@link HierarchyScanStrategy}
          */
         public HierarchyScanStrategy build() {
-            return new HierarchyScanStrategy(hierarchyScanEnabled, nearestExcludedAncestor);
+            return new HierarchyScanStrategy(highestAncestor, includeHighestAncestor);
         }
     }
 
-    private final boolean hierarchyScanEnabled;
+    private final Class<?> highestAncestor;
 
-    private final Class<?> nearestExcludedAncestor;
+    private final boolean includeHighestAncestor;
 
-    private HierarchyScanStrategy(boolean hierarchyScanEnabled, Class<?> nearestExcludedAncestor) {
-        this.hierarchyScanEnabled = hierarchyScanEnabled;
-        this.nearestExcludedAncestor = nearestExcludedAncestor;
+    private HierarchyScanStrategy(Class<?> highestAncestor, boolean includeHighestAncestor) {
+        this.highestAncestor = highestAncestor;
+        this.includeHighestAncestor = includeHighestAncestor;
     }
 
     /**
-     * Returns whether or not the strategy allows scanning ancestors
-     * of annotated classes.
-     *
-     * @return whether or not the strategy allows scanning ancestors
-     * of annotated classes.
+     * Returns the highest ancestor that will be scanned for mapping annotations.
+     * <p/>
+     * A value of {@code null} indicates that hierarchy scanning is disabled, only the mapped classes themselves will be
+     * processed for annotations.
      */
-    public boolean isHierarchyScanEnabled() {
-        return hierarchyScanEnabled;
+    public Class<?> getHighestAncestor() {
+        return highestAncestor;
     }
 
     /**
-     * Returns the nearest ancestor of any annotated class that should be prevented from mapping.
-     * <p/>
-     * This class and all its ancestors will be excluded from class hierarchy scan.
-     * <p/>
-     * The default is {@code Object.class}, which means that the entire class hierarchy is
-     * scanned for mapped properties.
-     *
-     * @return the nearest ancestor of any annotated class that should be prevented from mapping.
+     * Returns whether or not the highest ancestor is included.
      */
-    public Class<?> getNearestExcludedAncestor() {
-        return nearestExcludedAncestor;
+    public boolean includeHighestAncestor() {
+        return includeHighestAncestor;
     }
 
 }
