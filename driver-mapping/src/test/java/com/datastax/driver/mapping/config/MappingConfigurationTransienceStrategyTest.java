@@ -23,14 +23,12 @@ import com.datastax.driver.mapping.annotations.Table;
 import com.datastax.driver.mapping.annotations.Transient;
 import org.testng.annotations.Test;
 
-import static com.datastax.driver.mapping.config.PropertyMappingStrategy.OPT_IN;
-import static com.datastax.driver.mapping.config.PropertyMappingStrategy.OPT_OUT;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Test for JAVA-1310 - validate ability configure property mapping strategy - whitelist vs. blacklist
  */
-public class MappingConfigurationMappingStrategyTest extends CCMTestsSupport {
+public class MappingConfigurationTransienceStrategyTest extends CCMTestsSupport {
 
     @Override
     public void onTestContextInitialized() {
@@ -42,7 +40,7 @@ public class MappingConfigurationMappingStrategyTest extends CCMTestsSupport {
     public void should_map_only_non_transient() {
         MappingConfiguration conf = MappingConfiguration.builder()
                 .withPropertyScanConfiguration(PropertyScanConfiguration.builder()
-                        .withPropertyMappingStrategy(OPT_OUT)
+                        .withPropertyMappingStrategy(DefaultPropertyTransienceStrategy.builder().build())
                         .build())
                 .build();
         MappingManager mappingManager = new MappingManager(session(), conf);
@@ -83,7 +81,7 @@ public class MappingConfigurationMappingStrategyTest extends CCMTestsSupport {
     public void should_map_only_annotated() {
         MappingConfiguration conf = MappingConfiguration.builder()
                 .withPropertyScanConfiguration(PropertyScanConfiguration.builder()
-                        .withPropertyMappingStrategy(OPT_IN)
+                        .withPropertyMappingStrategy(new OptInPropertyTransienceStrategy())
                         .build())
                 .build();
         MappingManager mappingManager = new MappingManager(session(), conf);

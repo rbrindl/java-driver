@@ -19,18 +19,15 @@ import com.datastax.driver.core.Metadata;
 import com.datastax.driver.core.TypeCodec;
 import com.datastax.driver.mapping.annotations.*;
 import com.datastax.driver.mapping.config.PropertyScanConfiguration;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.reflect.TypeToken;
 
 import java.beans.PropertyDescriptor;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.Map;
-import java.util.Set;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
@@ -43,12 +40,6 @@ import static com.google.common.base.Preconditions.checkArgument;
  */
 class PropertyMapper {
 
-    private static final Set<Class<? extends Annotation>> COLUMN_ANNOTATIONS =
-            ImmutableSet.<Class<? extends Annotation>>builder()
-                    .addAll(AnnotationParser.VALID_COLUMN_ANNOTATIONS)
-                    .addAll(AnnotationParser.VALID_FIELD_ANNOTATIONS)
-                    .build();
-
     private final String propertyName;
     final String alias;
     final String columnName;
@@ -57,17 +48,17 @@ class PropertyMapper {
     final int position;
 
     private final Field field;
-    private final Set<String> globalTransientProperties;
+    private final PropertyDescriptor property;
     private final Method getter;
     private final Method setter;
     private final Map<Class<? extends Annotation>, Annotation> annotations;
     private final PropertyScanConfiguration configuration;
 
-    PropertyMapper(Class<?> baseClass, String propertyName, String alias, Field field, PropertyDescriptor property, Set<String> globalTransientProperties, PropertyScanConfiguration configuration) {
+    PropertyMapper(Class<?> baseClass, String propertyName, String alias, Field field, PropertyDescriptor property, PropertyScanConfiguration configuration) {
         this.propertyName = propertyName;
         this.alias = alias;
         this.field = field;
-        this.globalTransientProperties = globalTransientProperties;
+        this.property = property;
         this.configuration = configuration;
         getter = ReflectionUtils.findGetter(property);
         setter = ReflectionUtils.findSetter(baseClass, property);
@@ -132,28 +123,8 @@ class PropertyMapper {
     }
 
     boolean isTransient() {
-        // JAVA-1310: Make transient properties configurable at mapper level
-        // (should properties be transient by default or not)
-        switch (configuration.getPropertyMappingStrategy()) {
-            case OPT_OUT:
-                return hasAnnotation(Transient.class) ||
-                        (this.field != null && Modifier.isTransient(this.field.getModifiers())) ||
-                        // If a property is both annotated and declared as transient in the class annotation, the property
-                        // annotations take precedence (the property will not be transient)
-                        globalTransientProperties.contains(propertyName) && !hasColumnAnnotation();
-            case OPT_IN:
-                return !hasColumnAnnotation();
-        }
-        throw new IllegalArgumentException("Unhandled PropertyMappingStrategy" + configuration.getPropertyMappingStrategy().name());
-    }
-
-    private boolean hasColumnAnnotation() {
-        for (Class<? extends Annotation> columnAnnotation : COLUMN_ANNOTATIONS) {
-            if (hasAnnotation(columnAnnotation)) {
-                return true;
-            }
-        }
-        return false;
+        return field == null && getter == null && setter == null
+                || configuration.getPropertyTransienceStrategy().isTransient(propertyName, field, getter, setter, annotations);
     }
 
     boolean isPartitionKey() {

@@ -24,7 +24,7 @@ package com.datastax.driver.mapping.config;
  * {@link PropertyScanConfiguration property scanning}
  * <ul>
  * <li>{@link PropertyAccessStrategy property access strategy}: defines how to access mapped properties.</li>
- * <li>{@link PropertyMappingStrategy property mapping strategy}: defines whether or not to map all discovered
+ * <li>{@link PropertyTransienceStrategy property mapping strategy}: defines whether or not to map all discovered
  * properties, or only those explicitly annotated.</li>
  * <li>{@link HierarchyScanStrategy hierarchy scanning strategy}: defines how to scan for mapped properties in
  * parent classes.</li>

@@ -15,12 +15,6 @@
  */
 package com.datastax.driver.mapping.config;
 
-import com.google.common.collect.Sets;
-
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Set;
-
 /**
  * Configuration settings that determine how the mapper
  * scans Java classes looking for mapped properties.
@@ -41,70 +35,11 @@ public class PropertyScanConfiguration {
      */
     public static class Builder {
 
-        private Set<String> transientProperties = Sets.newHashSet(
-                "class",
-                // JAVA-1279: exclude Groovy's metaClass property
-                "metaClass"
-        );
-
         private PropertyAccessStrategy propertyAccessStrategy = PropertyAccessStrategy.BOTH;
 
-        private PropertyMappingStrategy propertyMappingStrategy = PropertyMappingStrategy.OPT_OUT;
+        private PropertyTransienceStrategy propertyTransienceStrategy = DefaultPropertyTransienceStrategy.builder().build();
 
         private HierarchyScanStrategy hierarchyScanStrategy = HierarchyScanStrategy.builder().build();
-
-        /**
-         * Adds properties to globally exclude from mapping.
-         * <p/>
-         * Property names added here will be considered transient throughout
-         * all the mappers created with this configuration;
-         * if a more fine-grained tuning is required, it is also possible
-         * to use the {@link com.datastax.driver.mapping.annotations.Transient @Transient} annotation
-         * on a specific property.
-         * <p/>
-         * The default for this setting is {@code {"class", "metaClass"}}.
-         * These properties pertain to the {@link Object} class –
-         * {@code metaClass} being specific to the Groovy language – so it is not possible
-         * to remove them from the set of excluded properties.
-         * <p/>
-         * Note that this setting has no effect if the
-         * {@link #withPropertyMappingStrategy(PropertyMappingStrategy) property mapping strategy}
-         * is set to {@link PropertyMappingStrategy#OPT_IN OPT_IN}, because with this
-         * strategy all properties are transient by default.
-         *
-         * @param transientProperties a collection of properties to exclude from mapping.
-         * @return this {@link Builder} instance (to allow for fluent builder pattern).
-         */
-        public Builder addTransientProperties(Collection<String> transientProperties) {
-            this.transientProperties.addAll(transientProperties);
-            return this;
-        }
-
-        /**
-         * Adds properties to globally exclude from mapping.
-         * <p/>
-         * Property names added here will be considered transient throughout
-         * all the mappers created with this configuration;
-         * if a more fine-grained tuning is required, it is also possible
-         * to use the {@link com.datastax.driver.mapping.annotations.Transient @Transient} annotation
-         * on a specific property.
-         * <p/>
-         * The default for this setting is {@code {"class", "metaClass"}}.
-         * These properties pertain to the {@link Object} class –
-         * {@code metaClass} being specific to the Groovy language – so it is not possible
-         * to remove them from the set of excluded properties.
-         * <p/>
-         * Note that this setting has no effect if the
-         * {@link #withPropertyMappingStrategy(PropertyMappingStrategy) property mapping strategy}
-         * is set to {@link PropertyMappingStrategy#OPT_IN OPT_IN}, because with this
-         * strategy all properties are transient by default.
-         *
-         * @param transientProperties a collection of properties to exclude from mapping.
-         * @return this {@link Builder} instance (to allow for fluent builder pattern).
-         */
-        public Builder addTransientProperties(String... transientProperties) {
-            return addTransientProperties(Arrays.asList(transientProperties));
-        }
 
         /**
          * Sets the {@link PropertyAccessStrategy property access strategy} to use.
@@ -119,14 +54,14 @@ public class PropertyScanConfiguration {
         }
 
         /**
-         * Sets the {@link PropertyMappingStrategy property mapping strategy} to use.
-         * The default is {@link PropertyMappingStrategy#OPT_OUT}.
+         * Sets the {@link PropertyTransienceStrategy property mapping strategy} to use.
+         * The default is {@link DefaultPropertyTransienceStrategy}.
          *
-         * @param propertyMappingStrategy the {@link PropertyMappingStrategy property mapping strategy} to use.
+         * @param propertyTransienceStrategy the {@link PropertyTransienceStrategy property mapping strategy} to use.
          * @return this {@link Builder} instance (to allow for fluent builder pattern).
          */
-        public Builder withPropertyMappingStrategy(PropertyMappingStrategy propertyMappingStrategy) {
-            this.propertyMappingStrategy = propertyMappingStrategy;
+        public Builder withPropertyMappingStrategy(PropertyTransienceStrategy propertyTransienceStrategy) {
+            this.propertyTransienceStrategy = propertyTransienceStrategy;
             return this;
         }
 
@@ -148,43 +83,21 @@ public class PropertyScanConfiguration {
          * @return a new instance of {@link PropertyScanConfiguration}
          */
         public PropertyScanConfiguration build() {
-            return new PropertyScanConfiguration(transientProperties, propertyAccessStrategy, propertyMappingStrategy, hierarchyScanStrategy);
+            return new PropertyScanConfiguration(propertyAccessStrategy, propertyTransienceStrategy, hierarchyScanStrategy);
         }
 
     }
 
-    private final Set<String> transientProperties;
-
     private final PropertyAccessStrategy propertyAccessStrategy;
 
-    private final PropertyMappingStrategy propertyMappingStrategy;
+    private final PropertyTransienceStrategy propertyTransienceStrategy;
 
     private final HierarchyScanStrategy hierarchyScanStrategy;
 
-    private PropertyScanConfiguration(Set<String> transientProperties, PropertyAccessStrategy propertyAccessStrategy, PropertyMappingStrategy propertyMappingStrategy, HierarchyScanStrategy hierarchyScanStrategy) {
-        this.transientProperties = transientProperties;
+    private PropertyScanConfiguration(PropertyAccessStrategy propertyAccessStrategy, PropertyTransienceStrategy propertyTransienceStrategy, HierarchyScanStrategy hierarchyScanStrategy) {
         this.propertyAccessStrategy = propertyAccessStrategy;
-        this.propertyMappingStrategy = propertyMappingStrategy;
+        this.propertyTransienceStrategy = propertyTransienceStrategy;
         this.hierarchyScanStrategy = hierarchyScanStrategy;
-    }
-
-    /**
-     * Returns a collection of properties to globally exclude from mapping.
-     * <p/>
-     * Property names defined here will be considered transient throughout
-     * all the mappers created with this configuration;
-     * if a more fine-grained tuning is required, it is also possible
-     * to use the {@link com.datastax.driver.mapping.annotations.Transient @Transient} annotation
-     * on a specific property.
-     * <p/>
-     * Note that this setting has no effect if the {@link #getPropertyMappingStrategy()}
-     * is set to {@link PropertyMappingStrategy#OPT_IN OPT_IN}, because with this
-     * strategy all properties are transient by default.
-     *
-     * @return a collection of properties to exclude from mapping.
-     */
-    public Set<String> getTransientProperties() {
-        return transientProperties;
     }
 
     /**
@@ -197,12 +110,12 @@ public class PropertyScanConfiguration {
     }
 
     /**
-     * Returns the {@link PropertyMappingStrategy}.
+     * Returns the {@link PropertyTransienceStrategy}.
      *
-     * @return the {@link PropertyMappingStrategy}.
+     * @return the {@link PropertyTransienceStrategy}.
      */
-    public PropertyMappingStrategy getPropertyMappingStrategy() {
-        return propertyMappingStrategy;
+    public PropertyTransienceStrategy getPropertyTransienceStrategy() {
+        return propertyTransienceStrategy;
     }
 
     /**
