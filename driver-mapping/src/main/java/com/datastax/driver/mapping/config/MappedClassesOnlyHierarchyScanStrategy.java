@@ -16,7 +16,7 @@
 package com.datastax.driver.mapping.config;
 
 import java.util.Collections;
-import java.util.Set;
+import java.util.List;
 
 /**
  * A {@link HierarchyScanStrategy} that excludes all ancestors of mapped classes, thus
@@ -29,7 +29,7 @@ import java.util.Set;
 public class MappedClassesOnlyHierarchyScanStrategy implements HierarchyScanStrategy {
 
     @Override
-    public Set<Class<?>> filterClassHierarchy(Class<?> mappedClass) {
-        return Collections.<Class<?>>singleton(mappedClass);
+    public List<Class<?>> filterClassHierarchy(Class<?> mappedClass) {
+        return Collections.emptyList();
     }
 }

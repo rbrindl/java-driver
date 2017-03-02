@@ -90,7 +90,7 @@ public class DefaultHierarchyScanStrategy implements HierarchyScanStrategy {
     public List<Class<?>> filterClassHierarchy(Class<?> mappedClass) {
         List<Class<?>> classesToScan = new ArrayList<Class<?>>();
         Class<?> highestAncestor = this.highestAncestor;
-        for (Class<?> clazz = mappedClass; clazz != null; clazz = clazz.getSuperclass()) {
+        for (Class<?> clazz = mappedClass.getSuperclass(); clazz != null; clazz = clazz.getSuperclass()) {
             if (!clazz.equals(highestAncestor) || includeHighestAncestor) {
                 classesToScan.add(clazz);
             }

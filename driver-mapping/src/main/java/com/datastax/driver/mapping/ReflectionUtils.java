@@ -17,6 +17,7 @@ package com.datastax.driver.mapping;
 
 import com.datastax.driver.mapping.config.HierarchyScanStrategy;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Lists;
 
 import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
@@ -25,6 +26,7 @@ import java.beans.PropertyDescriptor;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -58,7 +60,8 @@ class ReflectionUtils {
     // they cannot be both null at the same time
     static <T> Map<String, Object[]> scanFieldsAndProperties(Class<T> baseClass, HierarchyScanStrategy hierarchyScanStrategy) {
         Map<String, Object[]> fieldsAndProperties = new HashMap<String, Object[]>();
-        Iterable<Class<?>> classesToScan = hierarchyScanStrategy.filterClassHierarchy(baseClass);
+        List<Class<?>> classesToScan = Lists.<Class<?>>newArrayList(baseClass);
+        classesToScan.addAll(hierarchyScanStrategy.filterClassHierarchy(baseClass));
         Map<String, Field> fields = scanFields(classesToScan);
         for (Map.Entry<String, Field> entry : fields.entrySet()) {
             fieldsAndProperties.put(entry.getKey(), new Object[]{entry.getValue(), null});
