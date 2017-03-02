@@ -44,11 +44,11 @@ public class MappingConfigurationHierarchyScanStrategyTest extends CCMTestsSuppo
                 .withHierarchyScanStrategy(new MappedClassesOnlyHierarchyScanStrategy())
                 .build();
         MappingManager mappingManager = new MappingManager(session(), conf);
-        mappingManager.mapper(Foo1.class);
+        mappingManager.mapper(Child1.class);
     }
 
     @SuppressWarnings({"unused", "WeakerAccess"})
-    public static class Boo1 {
+    public static class Parent1 {
 
         @Column(name = "notAColumn")
         private int notAColumn;
@@ -57,7 +57,7 @@ public class MappingConfigurationHierarchyScanStrategyTest extends CCMTestsSuppo
 
     @Table(name = "foo")
     @SuppressWarnings({"unused", "WeakerAccess"})
-    public static class Foo1 extends Boo1 {
+    public static class Child1 extends Parent1 {
 
         @PartitionKey
         private int k;
@@ -76,11 +76,11 @@ public class MappingConfigurationHierarchyScanStrategyTest extends CCMTestsSuppo
     public void should_inherit_annotations_up_to_highest_ancestor_exluded() {
         MappingConfiguration conf = MappingConfiguration.builder()
                 .withHierarchyScanStrategy(DefaultHierarchyScanStrategy.builder()
-                        .withHighestAncestor(GrandParent.class, false)
+                        .withHighestAncestor(GrandParent2.class, false)
                         .build())
                 .build();
         MappingManager mappingManager = new MappingManager(session(), conf);
-        Mapper<Child> mapper = mappingManager.mapper(Child.class);
+        Mapper<Child2> mapper = mappingManager.mapper(Child2.class);
         assertThat(mapper.get(1).getV()).isEqualTo(1);
     }
 
@@ -88,16 +88,16 @@ public class MappingConfigurationHierarchyScanStrategyTest extends CCMTestsSuppo
     public void should_inherit_annotations_up_to_highest_ancestor_included() {
         MappingConfiguration conf = MappingConfiguration.builder()
                 .withHierarchyScanStrategy(DefaultHierarchyScanStrategy.builder()
-                        .withHighestAncestor(Parent.class, true)
+                        .withHighestAncestor(Parent2.class, true)
                         .build())
                 .build();
         MappingManager mappingManager = new MappingManager(session(), conf);
-        Mapper<Child> mapper = mappingManager.mapper(Child.class);
+        Mapper<Child2> mapper = mappingManager.mapper(Child2.class);
         assertThat(mapper.get(1).getV()).isEqualTo(1);
     }
 
     @SuppressWarnings({"unused", "WeakerAccess"})
-    public static class GrandParent {
+    public static class GrandParent2 {
 
         @Column(name = "notAColumn")
         private int notAColumn;
@@ -105,7 +105,7 @@ public class MappingConfigurationHierarchyScanStrategyTest extends CCMTestsSuppo
     }
 
     @SuppressWarnings({"unused", "WeakerAccess"})
-    public static class Parent extends GrandParent {
+    public static class Parent2 extends GrandParent2 {
 
         private int v;
 
@@ -121,7 +121,7 @@ public class MappingConfigurationHierarchyScanStrategyTest extends CCMTestsSuppo
 
     @Table(name = "foo")
     @SuppressWarnings({"unused", "WeakerAccess"})
-    public static class Child extends Parent {
+    public static class Child2 extends Parent2 {
 
         @PartitionKey
         private int k;
