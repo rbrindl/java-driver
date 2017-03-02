@@ -15,7 +15,6 @@
  */
 package com.datastax.driver.mapping;
 
-import com.datastax.driver.mapping.config.HierarchyScanStrategy;
 import com.datastax.driver.mapping.config.PropertyScanConfiguration;
 import com.google.common.base.Throwables;
 
@@ -25,9 +24,7 @@ import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -61,11 +58,12 @@ class ReflectionUtils {
     // they cannot be both null at the same time
     static <T> Map<String, Object[]> scanFieldsAndProperties(Class<T> baseClass, PropertyScanConfiguration scanConfiguration) {
         Map<String, Object[]> fieldsAndProperties = new HashMap<String, Object[]>();
-        Map<String, Field> fields = scanFields(baseClass, scanConfiguration);
+        Iterable<Class<?>> classesToScan = scanConfiguration.getHierarchyScanStrategy().filterClassHierarchy(baseClass);
+        Map<String, Field> fields = scanFields(classesToScan);
         for (Map.Entry<String, Field> entry : fields.entrySet()) {
             fieldsAndProperties.put(entry.getKey(), new Object[]{entry.getValue(), null});
         }
-        Map<String, PropertyDescriptor> properties = scanProperties(baseClass, scanConfiguration);
+        Map<String, PropertyDescriptor> properties = scanProperties(classesToScan);
         for (Map.Entry<String, PropertyDescriptor> entry : properties.entrySet()) {
             Object[] value = fieldsAndProperties.get(entry.getKey());
             if (value == null)
@@ -75,9 +73,8 @@ class ReflectionUtils {
         return fieldsAndProperties;
     }
 
-    private static <T> Map<String, Field> scanFields(Class<T> baseClass, PropertyScanConfiguration scanConfiguration) {
+    private static Map<String, Field> scanFields(Iterable<Class<?>> classesToScan) {
         HashMap<String, Field> fields = new HashMap<String, Field>();
-        List<Class<?>> classesToScan = calculateClassesToScan(baseClass, scanConfiguration);
         for (Class<?> clazz : classesToScan) {
             for (Field field : clazz.getDeclaredFields()) {
                 if (field.isSynthetic() || Modifier.isStatic(field.getModifiers()))
@@ -90,9 +87,8 @@ class ReflectionUtils {
         return fields;
     }
 
-    private static <T> Map<String, PropertyDescriptor> scanProperties(Class<T> baseClass, PropertyScanConfiguration scanConfiguration) {
+    private static Map<String, PropertyDescriptor> scanProperties(Iterable<Class<?>> classesToScan) {
         Map<String, PropertyDescriptor> properties = new HashMap<String, PropertyDescriptor>();
-        List<Class<?>> classesToScan = calculateClassesToScan(baseClass, scanConfiguration);
         for (Class<?> clazz : classesToScan) {
             // each time extract only current class properties
             BeanInfo beanInfo;
@@ -108,28 +104,6 @@ class ReflectionUtils {
             }
         }
         return properties;
-    }
-
-    private static List<Class<?>> calculateClassesToScan(Class<?> baseClass, PropertyScanConfiguration scanConfiguration) {
-        // JAVA-1310: Make the class hierarchy scan configurable at mapper level
-        // (scan the whole hierarchy, or just annotated classes)
-        List<Class<?>> classesToScan = new ArrayList<Class<?>>();
-        HierarchyScanStrategy scanStrategy = scanConfiguration.getHierarchyScanStrategy();
-        Class<?> highestAncestor = scanStrategy.getHighestAncestor();
-        boolean include = scanStrategy.includeHighestAncestor();
-        if (highestAncestor == null) {
-            highestAncestor = baseClass.getSuperclass();
-            include = false;
-        }
-        for (Class<?> clazz = baseClass; clazz != null; clazz = clazz.getSuperclass()) {
-            if (!clazz.equals(highestAncestor) || include) {
-                classesToScan.add(clazz);
-            }
-            if (clazz.equals(highestAncestor)) {
-                break;
-            }
-        }
-        return classesToScan;
     }
 
     static Map<Class<? extends Annotation>, Annotation> scanPropertyAnnotations(Field field, Method getter) {

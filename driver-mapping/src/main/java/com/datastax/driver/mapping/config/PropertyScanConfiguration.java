@@ -39,7 +39,7 @@ public class PropertyScanConfiguration {
 
         private PropertyTransienceStrategy propertyTransienceStrategy = DefaultPropertyTransienceStrategy.builder().build();
 
-        private HierarchyScanStrategy hierarchyScanStrategy = HierarchyScanStrategy.builder().build();
+        private HierarchyScanStrategy hierarchyScanStrategy = DefaultHierarchyScanStrategy.builder().build();
 
         /**
          * Sets the {@link PropertyAccessStrategy property access strategy} to use.
