@@ -16,7 +16,7 @@
 package com.datastax.driver.mapping.config;
 
 /**
- * A strategy to determine how ancestors of mapped classes are scanned for annotations.
+ * A strategy to determine which ancestors of mapped classes should be scanned for annotations.
  */
 public interface HierarchyScanStrategy {
 
@@ -27,11 +27,11 @@ public interface HierarchyScanStrategy {
      * Implementors are expected to always include {@code baseClass}
      * in the returned list.
      *
-     * @param baseClass The base class; this is necessarily a class annotated with
+     * @param mappedClass The mapped class; this is necessarily a class annotated with
      *                  either {@link com.datastax.driver.mapping.annotations.Table @Table} or
-     *                  {@link com.datastax.driver.mapping.annotations.UDT @UDT}
+     *                  {@link com.datastax.driver.mapping.annotations.UDT @UDT}.
      * @return the ancestors to scan, including {@code baseClass} itself.
      */
-    Iterable<Class<?>> filterClassHierarchy(Class<?> baseClass);
+    Iterable<Class<?>> filterClassHierarchy(Class<?> mappedClass);
 
 }

@@ -29,7 +29,7 @@ import java.util.Set;
 public class MappedClassesOnlyHierarchyScanStrategy implements HierarchyScanStrategy {
 
     @Override
-    public Set<Class<?>> filterClassHierarchy(Class<?> baseClass) {
-        return Collections.<Class<?>>singleton(baseClass);
+    public Set<Class<?>> filterClassHierarchy(Class<?> mappedClass) {
+        return Collections.<Class<?>>singleton(mappedClass);
     }
 }

@@ -41,19 +41,19 @@ public class DefaultPropertyAccessStrategy implements PropertyAccessStrategy {
     }
 
     @Override
-    public Method locateGetter(Class<?> baseClass, PropertyDescriptor property) {
+    public Method locateGetter(Class<?> mappedClass, PropertyDescriptor property) {
         return property.getReadMethod();
     }
 
     @Override
-    public Method locateSetter(Class<?> baseClass, PropertyDescriptor property) {
+    public Method locateSetter(Class<?> mappedClass, PropertyDescriptor property) {
         Method setter = property.getWriteMethod();
         if (setter == null) {
             // JAVA-984: look for a "relaxed" setter, ie. a setter whose return type may be anything
             String propertyName = property.getName();
             String setterName = "set" + propertyName.substring(0, 1).toUpperCase() + propertyName.substring(1);
             try {
-                Method m = baseClass.getMethod(setterName, property.getPropertyType());
+                Method m = mappedClass.getMethod(setterName, property.getPropertyType());
                 if (!Modifier.isStatic(m.getModifiers()))
                     setter = m;
             } catch (NoSuchMethodException ignored) {

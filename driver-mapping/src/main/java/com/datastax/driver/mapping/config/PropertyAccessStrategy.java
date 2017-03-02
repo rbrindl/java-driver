@@ -44,21 +44,25 @@ public interface PropertyAccessStrategy {
      * Locates a getter method for the given base class and given property.
      * If this method returns {@code null} then no getter will be used to access the given property.
      *
-     * @param baseClass The base class; never {@code null}.
+     * @param mappedClass The mapped class; this is necessarily a class annotated with
+     *                  either {@link com.datastax.driver.mapping.annotations.Table @Table} or
+     *                  {@link com.datastax.driver.mapping.annotations.UDT @UDT}.
      * @param property  The property to locate a getter for; never {@code null}.
      * @return The getter method for the given base class and given property, or {@code null} if no getter was found.
      */
-    Method locateGetter(Class<?> baseClass, PropertyDescriptor property);
+    Method locateGetter(Class<?> mappedClass, PropertyDescriptor property);
 
     /**
      * Locates a setter method for the given base class and given property.
      * If this method returns {@code null} then no setter will be used to access the given property.
      *
-     * @param baseClass The base class; never {@code null}.
+     * @param mappedClass The mapped class; this is necessarily a class annotated with
+     *                  either {@link com.datastax.driver.mapping.annotations.Table @Table} or
+     *                  {@link com.datastax.driver.mapping.annotations.UDT @UDT}.
      * @param property  The property to locate a setter for; never {@code null}.
      * @return The setter method for the given base class and given property, or {@code null} if no setter was found.
      */
-    Method locateSetter(Class<?> baseClass, PropertyDescriptor property);
+    Method locateSetter(Class<?> mappedClass, PropertyDescriptor property);
 
     /**
      * Reads a property.

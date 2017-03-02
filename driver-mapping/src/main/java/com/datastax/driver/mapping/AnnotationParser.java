@@ -132,6 +132,9 @@ class AnnotationParser {
             if (propertyMapper.isTransient())
                 continue;
 
+            assert propertyMapper.javaType != null;
+            assert propertyMapper.columnName != null;
+
             if (!propertyMapper.isComputed() && tableMetadata.getColumn(propertyMapper.columnName) == null)
                 throw new IllegalArgumentException(String.format("Column %s does not exist in table %s.%s",
                         propertyMapper.columnName, ksName, tableName));
@@ -199,6 +202,9 @@ class AnnotationParser {
 
             if (propertyMapper.isTransient())
                 continue;
+
+            assert propertyMapper.javaType != null;
+            assert propertyMapper.columnName != null;
 
             if (!userType.contains(propertyMapper.columnName))
                 throw new IllegalArgumentException(String.format("Field %s does not exist in type %s.%s",

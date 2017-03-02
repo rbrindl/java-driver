@@ -87,10 +87,10 @@ public class DefaultHierarchyScanStrategy implements HierarchyScanStrategy {
     }
 
     @Override
-    public List<Class<?>> filterClassHierarchy(Class<?> baseClass) {
+    public List<Class<?>> filterClassHierarchy(Class<?> mappedClass) {
         List<Class<?>> classesToScan = new ArrayList<Class<?>>();
         Class<?> highestAncestor = this.highestAncestor;
-        for (Class<?> clazz = baseClass; clazz != null; clazz = clazz.getSuperclass()) {
+        for (Class<?> clazz = mappedClass; clazz != null; clazz = clazz.getSuperclass()) {
             if (!clazz.equals(highestAncestor) || includeHighestAncestor) {
                 classesToScan.add(clazz);
             }
