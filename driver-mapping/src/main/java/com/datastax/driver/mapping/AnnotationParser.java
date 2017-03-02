@@ -18,7 +18,7 @@ package com.datastax.driver.mapping;
 import com.datastax.driver.core.*;
 import com.datastax.driver.mapping.MethodMapper.ParamMapper;
 import com.datastax.driver.mapping.annotations.*;
-import com.datastax.driver.mapping.config.PropertyScanConfiguration;
+import com.datastax.driver.mapping.config.MappingConfiguration;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.reflect.TypeToken;
@@ -109,8 +109,8 @@ class AnnotationParser {
         List<PropertyMapper> ccs = new ArrayList<PropertyMapper>();
         List<PropertyMapper> rgs = new ArrayList<PropertyMapper>();
 
-        PropertyScanConfiguration propertyScanConfiguration = mappingManager.getConfiguration().getPropertyScanConfiguration();
-        Map<String, Object[]> fieldsAndProperties = ReflectionUtils.scanFieldsAndProperties(entityClass, propertyScanConfiguration);
+        MappingConfiguration configuration = mappingManager.getConfiguration();
+        Map<String, Object[]> fieldsAndProperties = ReflectionUtils.scanFieldsAndProperties(entityClass, configuration.getHierarchyScanStrategy());
         AtomicInteger columnCounter = mappingManager.isCassandraV1 ? null : new AtomicInteger(0);
 
         for (Map.Entry<String, Object[]> entry : fieldsAndProperties.entrySet()) {
@@ -122,7 +122,7 @@ class AnnotationParser {
                     ? "col" + columnCounter.incrementAndGet()
                     : null;
 
-            PropertyMapper propertyMapper = new PropertyMapper(entityClass, propertyName, alias, field, property, propertyScanConfiguration);
+            PropertyMapper propertyMapper = new PropertyMapper(entityClass, propertyName, alias, field, property, configuration);
 
             if (mappingManager.isCassandraV1 && propertyMapper.isComputed())
                 throw new UnsupportedOperationException("Computed properties are not supported with native protocol v1");
@@ -187,8 +187,8 @@ class AnnotationParser {
 
         Map<String, PropertyMapper> propertyMappers = new HashMap<String, PropertyMapper>();
 
-        PropertyScanConfiguration propertyScanConfiguration = mappingManager.getConfiguration().getPropertyScanConfiguration();
-        Map<String, Object[]> fieldsAndProperties = ReflectionUtils.scanFieldsAndProperties(udtClass, propertyScanConfiguration);
+        MappingConfiguration configuration = mappingManager.getConfiguration();
+        Map<String, Object[]> fieldsAndProperties = ReflectionUtils.scanFieldsAndProperties(udtClass, configuration.getHierarchyScanStrategy());
 
         for (Map.Entry<String, Object[]> entry : fieldsAndProperties.entrySet()) {
 
@@ -196,7 +196,7 @@ class AnnotationParser {
             java.lang.reflect.Field field = (java.lang.reflect.Field) entry.getValue()[0];
             PropertyDescriptor property = (PropertyDescriptor) entry.getValue()[1];
 
-            PropertyMapper propertyMapper = new PropertyMapper(udtClass, propertyName, null, field, property, propertyScanConfiguration);
+            PropertyMapper propertyMapper = new PropertyMapper(udtClass, propertyName, null, field, property, configuration);
 
             AnnotationChecks.validateAnnotations(propertyMapper, VALID_FIELD_ANNOTATIONS);
 

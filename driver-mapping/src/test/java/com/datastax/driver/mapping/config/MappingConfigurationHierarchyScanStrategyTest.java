@@ -41,9 +41,7 @@ public class MappingConfigurationHierarchyScanStrategyTest extends CCMTestsSuppo
     @Test(groups = "short")
     public void should_not_inherit_annotations_when_hierarchy_scan_disabled() {
         MappingConfiguration conf = MappingConfiguration.builder()
-                .withPropertyScanConfiguration(PropertyScanConfiguration.builder()
-                        .withHierarchyScanStrategy(HierarchyScanStrategy.DISABLED)
-                        .build())
+                .withHierarchyScanStrategy(new MappedClassesOnlyHierarchyScanStrategy())
                 .build();
         MappingManager mappingManager = new MappingManager(session(), conf);
         mappingManager.mapper(Foo1.class);
@@ -77,33 +75,29 @@ public class MappingConfigurationHierarchyScanStrategyTest extends CCMTestsSuppo
     @Test(groups = "short")
     public void should_inherit_annotations_up_to_highest_ancestor_exluded() {
         MappingConfiguration conf = MappingConfiguration.builder()
-                .withPropertyScanConfiguration(PropertyScanConfiguration.builder()
-                        .withHierarchyScanStrategy(HierarchyScanStrategy.builder()
-                                .withHighestAncestor(Goo2.class, false)
-                                .build())
+                .withHierarchyScanStrategy(DefaultHierarchyScanStrategy.builder()
+                        .withHighestAncestor(GrandParent.class, false)
                         .build())
                 .build();
         MappingManager mappingManager = new MappingManager(session(), conf);
-        Mapper<Foo2> mapper = mappingManager.mapper(Foo2.class);
+        Mapper<Child> mapper = mappingManager.mapper(Child.class);
         assertThat(mapper.get(1).getV()).isEqualTo(1);
     }
 
     @Test(groups = "short")
     public void should_inherit_annotations_up_to_highest_ancestor_included() {
         MappingConfiguration conf = MappingConfiguration.builder()
-                .withPropertyScanConfiguration(PropertyScanConfiguration.builder()
-                        .withHierarchyScanStrategy(HierarchyScanStrategy.builder()
-                                .withHighestAncestor(Boo2.class, true)
-                                .build())
+                .withHierarchyScanStrategy(DefaultHierarchyScanStrategy.builder()
+                        .withHighestAncestor(Parent.class, true)
                         .build())
                 .build();
         MappingManager mappingManager = new MappingManager(session(), conf);
-        Mapper<Foo2> mapper = mappingManager.mapper(Foo2.class);
+        Mapper<Child> mapper = mappingManager.mapper(Child.class);
         assertThat(mapper.get(1).getV()).isEqualTo(1);
     }
 
     @SuppressWarnings({"unused", "WeakerAccess"})
-    public static class Goo2 {
+    public static class GrandParent {
 
         @Column(name = "notAColumn")
         private int notAColumn;
@@ -111,7 +105,7 @@ public class MappingConfigurationHierarchyScanStrategyTest extends CCMTestsSuppo
     }
 
     @SuppressWarnings({"unused", "WeakerAccess"})
-    public static class Boo2 extends Goo2 {
+    public static class Parent extends GrandParent {
 
         private int v;
 
@@ -127,7 +121,7 @@ public class MappingConfigurationHierarchyScanStrategyTest extends CCMTestsSuppo
 
     @Table(name = "foo")
     @SuppressWarnings({"unused", "WeakerAccess"})
-    public static class Foo2 extends Boo2 {
+    public static class Child extends Parent {
 
         @PartitionKey
         private int k;

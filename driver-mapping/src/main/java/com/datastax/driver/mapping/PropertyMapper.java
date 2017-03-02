@@ -18,7 +18,7 @@ package com.datastax.driver.mapping;
 import com.datastax.driver.core.Metadata;
 import com.datastax.driver.core.TypeCodec;
 import com.datastax.driver.mapping.annotations.*;
-import com.datastax.driver.mapping.config.PropertyScanConfiguration;
+import com.datastax.driver.mapping.config.MappingConfiguration;
 import com.google.common.reflect.TypeToken;
 
 import java.beans.PropertyDescriptor;
@@ -48,17 +48,15 @@ class PropertyMapper {
     final int position;
 
     private final Field field;
-    private final PropertyDescriptor property;
     private final Method getter;
     private final Method setter;
     private final Map<Class<? extends Annotation>, Annotation> annotations;
-    private final PropertyScanConfiguration configuration;
+    private final MappingConfiguration configuration;
 
-    PropertyMapper(Class<?> baseClass, String propertyName, String alias, Field field, PropertyDescriptor property, PropertyScanConfiguration configuration) {
+    PropertyMapper(Class<?> baseClass, String propertyName, String alias, Field field, PropertyDescriptor property, MappingConfiguration configuration) {
         this.propertyName = propertyName;
         this.alias = alias;
         this.field = configuration.getPropertyAccessStrategy().isFieldAccessAllowed() ? field : null;
-        this.property = property;
         this.configuration = configuration;
         getter = property != null && configuration.getPropertyAccessStrategy().isGetterSetterAccessAllowed()
                 ? configuration.getPropertyAccessStrategy().locateGetter(baseClass, property)

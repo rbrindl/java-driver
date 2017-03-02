@@ -18,19 +18,12 @@ package com.datastax.driver.mapping.config;
 /**
  * The configuration to use for the mappers.
  * <p/>
- * The following categories can be configured:
- * <ol>
- * <li>
- * {@link PropertyScanConfiguration property scanning}
+ * The following strategies can be configured:
  * <ul>
  * <li>{@link PropertyAccessStrategy property access strategy}: defines how to access mapped properties.</li>
- * <li>{@link PropertyTransienceStrategy property mapping strategy}: defines whether or not to map all discovered
- * properties, or only those explicitly annotated.</li>
- * <li>{@link HierarchyScanStrategy hierarchy scanning strategy}: defines how to scan for mapped properties in
- * parent classes.</li>
+ * <li>{@link PropertyTransienceStrategy property transience strategy}: defines whether or not a given property is transient.</li>
+ * <li>{@link HierarchyScanStrategy hierarchy scanning strategy}: defines how to scan for mapped properties in parent classes.</li>
  * </ul>
- * </li>
- * </ol>
  */
 public class MappingConfiguration {
 
@@ -48,16 +41,45 @@ public class MappingConfiguration {
      */
     public static class Builder {
 
-        private PropertyScanConfiguration propertyScanConfiguration = PropertyScanConfiguration.builder().build();
+        private PropertyAccessStrategy propertyAccessStrategy = new DefaultPropertyAccessStrategy();
+
+        private PropertyTransienceStrategy propertyTransienceStrategy = DefaultPropertyTransienceStrategy.builder().build();
+
+        private HierarchyScanStrategy hierarchyScanStrategy = DefaultHierarchyScanStrategy.builder().build();
 
         /**
-         * Sets the {@link PropertyScanConfiguration} to use.
+         * Sets the {@link PropertyAccessStrategy property access strategy} to use.
+         * The default is {@link DefaultPropertyAccessStrategy}.
          *
-         * @param propertyScanConfiguration the {@link PropertyScanConfiguration} to use.
+         * @param propertyAccessStrategy the {@link PropertyAccessStrategy property access strategy} to use.
          * @return this {@link Builder} instance (to allow for fluent builder pattern).
          */
-        public Builder withPropertyScanConfiguration(PropertyScanConfiguration propertyScanConfiguration) {
-            this.propertyScanConfiguration = propertyScanConfiguration;
+        public Builder withPropertyAccessStrategy(PropertyAccessStrategy propertyAccessStrategy) {
+            this.propertyAccessStrategy = propertyAccessStrategy;
+            return this;
+        }
+
+        /**
+         * Sets the {@link PropertyTransienceStrategy property transience strategy} to use.
+         * The default is {@link DefaultPropertyTransienceStrategy}.
+         *
+         * @param propertyTransienceStrategy the {@link PropertyTransienceStrategy property transience strategy} to use.
+         * @return this {@link Builder} instance (to allow for fluent builder pattern).
+         */
+        public Builder withPropertyTransienceStrategy(PropertyTransienceStrategy propertyTransienceStrategy) {
+            this.propertyTransienceStrategy = propertyTransienceStrategy;
+            return this;
+        }
+
+        /**
+         * Sets the {@link HierarchyScanStrategy hierarchy scan strategy} to use.
+         * The default is {@link DefaultHierarchyScanStrategy}.
+         *
+         * @param hierarchyScanStrategy the {@link HierarchyScanStrategy hierarchy scan strategy} to use.
+         * @return this {@link Builder} instance (to allow for fluent builder pattern).
+         */
+        public Builder withHierarchyScanStrategy(HierarchyScanStrategy hierarchyScanStrategy) {
+            this.hierarchyScanStrategy = hierarchyScanStrategy;
             return this;
         }
 
@@ -68,23 +90,47 @@ public class MappingConfiguration {
          * @return a new instance of {@link MappingConfiguration}
          */
         public MappingConfiguration build() {
-            return new MappingConfiguration(propertyScanConfiguration);
+            return new MappingConfiguration(propertyAccessStrategy, propertyTransienceStrategy, hierarchyScanStrategy);
         }
     }
 
-    private final PropertyScanConfiguration propertyScanConfiguration;
+    private final PropertyAccessStrategy propertyAccessStrategy;
 
-    private MappingConfiguration(PropertyScanConfiguration propertyScanConfiguration) {
-        this.propertyScanConfiguration = propertyScanConfiguration;
+    private final PropertyTransienceStrategy propertyTransienceStrategy;
+
+    private final HierarchyScanStrategy hierarchyScanStrategy;
+
+    private MappingConfiguration(PropertyAccessStrategy propertyAccessStrategy, PropertyTransienceStrategy propertyTransienceStrategy, HierarchyScanStrategy hierarchyScanStrategy) {
+        this.propertyAccessStrategy = propertyAccessStrategy;
+        this.propertyTransienceStrategy = propertyTransienceStrategy;
+        this.hierarchyScanStrategy = hierarchyScanStrategy;
     }
 
     /**
-     * Returns {@link PropertyScanConfiguration property scanning configuration}.
+     * Returns the {@link PropertyAccessStrategy}.
      *
-     * @return the property scanning configuration.
+     * @return the {@link PropertyAccessStrategy}.
      */
-    public PropertyScanConfiguration getPropertyScanConfiguration() {
-        return propertyScanConfiguration;
+    public PropertyAccessStrategy getPropertyAccessStrategy() {
+        return propertyAccessStrategy;
+    }
+
+    /**
+     * Returns the {@link PropertyTransienceStrategy}.
+     *
+     * @return the {@link PropertyTransienceStrategy}.
+     */
+    public PropertyTransienceStrategy getPropertyTransienceStrategy() {
+        return propertyTransienceStrategy;
+    }
+
+    /**
+     * Returns the {@link HierarchyScanStrategy}.
+     *
+     * @return the {@link HierarchyScanStrategy}.
+     */
+    public HierarchyScanStrategy getHierarchyScanStrategy() {
+        return hierarchyScanStrategy;
     }
 
 }

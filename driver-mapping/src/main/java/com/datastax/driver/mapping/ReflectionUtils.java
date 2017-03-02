@@ -15,7 +15,7 @@
  */
 package com.datastax.driver.mapping;
 
-import com.datastax.driver.mapping.config.PropertyScanConfiguration;
+import com.datastax.driver.mapping.config.HierarchyScanStrategy;
 import com.google.common.base.Throwables;
 
 import java.beans.BeanInfo;
@@ -56,9 +56,9 @@ class ReflectionUtils {
     // for each key representing a property name,
     // value[0] contains a Field object, value[1] contains a PropertyDescriptor object;
     // they cannot be both null at the same time
-    static <T> Map<String, Object[]> scanFieldsAndProperties(Class<T> baseClass, PropertyScanConfiguration scanConfiguration) {
+    static <T> Map<String, Object[]> scanFieldsAndProperties(Class<T> baseClass, HierarchyScanStrategy hierarchyScanStrategy) {
         Map<String, Object[]> fieldsAndProperties = new HashMap<String, Object[]>();
-        Iterable<Class<?>> classesToScan = scanConfiguration.getHierarchyScanStrategy().filterClassHierarchy(baseClass);
+        Iterable<Class<?>> classesToScan = hierarchyScanStrategy.filterClassHierarchy(baseClass);
         Map<String, Field> fields = scanFields(classesToScan);
         for (Map.Entry<String, Field> entry : fields.entrySet()) {
             fieldsAndProperties.put(entry.getKey(), new Object[]{entry.getValue(), null});

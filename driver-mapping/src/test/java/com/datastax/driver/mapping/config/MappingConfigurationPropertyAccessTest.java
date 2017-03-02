@@ -39,9 +39,7 @@ public class MappingConfigurationPropertyAccessTest extends CCMTestsSupport {
     @Test(groups = "short")
     public void should_ignore_fields() {
         MappingConfiguration conf = MappingConfiguration.builder()
-                .withPropertyScanConfiguration(PropertyScanConfiguration.builder()
-                        .withPropertyAccessStrategy(new GetterSetterOnlyPropertyAccessStrategy())
-                        .build())
+                .withPropertyAccessStrategy(new GetterSetterOnlyPropertyAccessStrategy())
                 .build();
         MappingManager mappingManager = new MappingManager(session(), conf);
         mappingManager.mapper(Foo1.class);
@@ -67,9 +65,7 @@ public class MappingConfigurationPropertyAccessTest extends CCMTestsSupport {
     @Test(groups = "short")
     public void should_ignore_getters() {
         MappingConfiguration conf = MappingConfiguration.builder()
-                .withPropertyScanConfiguration(PropertyScanConfiguration.builder()
-                        .withPropertyAccessStrategy(new FieldOnlyPropertyAccessStrategy())
-                        .build())
+                .withPropertyAccessStrategy(new FieldOnlyPropertyAccessStrategy())
                 .build();
         MappingManager mappingManager = new MappingManager(session(), conf);
         mappingManager.mapper(Foo2.class);
@@ -94,9 +90,7 @@ public class MappingConfigurationPropertyAccessTest extends CCMTestsSupport {
     @Test(groups = "short")
     public void should_map_fields_and_getters() {
         MappingConfiguration conf = MappingConfiguration.builder()
-                .withPropertyScanConfiguration(PropertyScanConfiguration.builder()
-                        .withPropertyAccessStrategy(new DefaultPropertyAccessStrategy())
-                        .build())
+                .withPropertyAccessStrategy(new DefaultPropertyAccessStrategy())
                 .build();
         MappingManager mappingManager = new MappingManager(session(), conf);
         Mapper<Foo3> mapper = mappingManager.mapper(Foo3.class);
