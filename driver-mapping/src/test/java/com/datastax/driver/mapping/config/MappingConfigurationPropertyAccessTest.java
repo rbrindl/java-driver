@@ -23,7 +23,6 @@ import com.datastax.driver.mapping.annotations.Table;
 import com.datastax.driver.mapping.annotations.Transient;
 import org.testng.annotations.Test;
 
-import static com.datastax.driver.mapping.config.PropertyAccessStrategy.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -41,7 +40,7 @@ public class MappingConfigurationPropertyAccessTest extends CCMTestsSupport {
     public void should_ignore_fields() {
         MappingConfiguration conf = MappingConfiguration.builder()
                 .withPropertyScanConfiguration(PropertyScanConfiguration.builder()
-                        .withPropertyAccessStrategy(GETTERS_AND_SETTERS)
+                        .withPropertyAccessStrategy(new GetterSetterOnlyPropertyAccessStrategy())
                         .build())
                 .build();
         MappingManager mappingManager = new MappingManager(session(), conf);
@@ -69,7 +68,7 @@ public class MappingConfigurationPropertyAccessTest extends CCMTestsSupport {
     public void should_ignore_getters() {
         MappingConfiguration conf = MappingConfiguration.builder()
                 .withPropertyScanConfiguration(PropertyScanConfiguration.builder()
-                        .withPropertyAccessStrategy(FIELDS)
+                        .withPropertyAccessStrategy(new FieldOnlyPropertyAccessStrategy())
                         .build())
                 .build();
         MappingManager mappingManager = new MappingManager(session(), conf);
@@ -96,7 +95,7 @@ public class MappingConfigurationPropertyAccessTest extends CCMTestsSupport {
     public void should_map_fields_and_getters() {
         MappingConfiguration conf = MappingConfiguration.builder()
                 .withPropertyScanConfiguration(PropertyScanConfiguration.builder()
-                        .withPropertyAccessStrategy(BOTH)
+                        .withPropertyAccessStrategy(new DefaultPropertyAccessStrategy())
                         .build())
                 .build();
         MappingManager mappingManager = new MappingManager(session(), conf);

@@ -77,11 +77,6 @@ class ReflectionUtils {
 
     private static <T> Map<String, Field> scanFields(Class<T> baseClass, PropertyScanConfiguration scanConfiguration) {
         HashMap<String, Field> fields = new HashMap<String, Field>();
-        // JAVA-1310: Make the annotation parsing logic configurable at mapper level
-        // (only fields, only getters, or both)
-        if (!scanConfiguration.getPropertyAccessStrategy().isFieldAccessAllowed()) {
-            return fields;
-        }
         List<Class<?>> classesToScan = calculateClassesToScan(baseClass, scanConfiguration);
         for (Class<?> clazz : classesToScan) {
             for (Field field : clazz.getDeclaredFields()) {
@@ -97,11 +92,6 @@ class ReflectionUtils {
 
     private static <T> Map<String, PropertyDescriptor> scanProperties(Class<T> baseClass, PropertyScanConfiguration scanConfiguration) {
         Map<String, PropertyDescriptor> properties = new HashMap<String, PropertyDescriptor>();
-        // JAVA-1310: Make the annotation parsing logic configurable at mapper level
-        // (only fields, only getters, or both)
-        if (!scanConfiguration.getPropertyAccessStrategy().isGettersAndSettersAccessAllowed()) {
-            return properties;
-        }
         List<Class<?>> classesToScan = calculateClassesToScan(baseClass, scanConfiguration);
         for (Class<?> clazz : classesToScan) {
             // each time extract only current class properties
@@ -142,12 +132,11 @@ class ReflectionUtils {
         return classesToScan;
     }
 
-    static Map<Class<? extends Annotation>, Annotation> scanPropertyAnnotations(Field field, PropertyDescriptor property) {
+    static Map<Class<? extends Annotation>, Annotation> scanPropertyAnnotations(Field field, Method getter) {
         Map<Class<? extends Annotation>, Annotation> annotations = new HashMap<Class<? extends Annotation>, Annotation>();
         // annotations on getters should have precedence over annotations on fields
         if (field != null)
             scanFieldAnnotations(field, annotations);
-        Method getter = findGetter(property);
         if (getter != null)
             scanMethodAnnotations(getter, annotations);
         return annotations;
@@ -190,35 +179,6 @@ class ReflectionUtils {
         } catch (NoSuchMethodException e) {
             //ok
         }
-    }
-
-    static Method findGetter(PropertyDescriptor property) {
-        if (property == null)
-            return null;
-        Method getter = property.getReadMethod();
-        if (getter == null)
-            return null;
-        return getter;
-    }
-
-    static Method findSetter(Class<?> baseClass, PropertyDescriptor property) {
-        if (property == null)
-            return null;
-        Method setter = property.getWriteMethod();
-        if (setter != null)
-            return setter;
-        String propertyName = property.getName();
-        String setterName = "set" + propertyName.substring(0, 1).toUpperCase() + propertyName.substring(1);
-        // JAVA-984: look for a "relaxed" setter, ie. a setter whose return type may be anything
-        try {
-            setter = baseClass.getMethod(setterName, property.getPropertyType());
-            if (!Modifier.isStatic(setter.getModifiers())) {
-                return setter;
-            }
-        } catch (NoSuchMethodException e) {
-            // ok
-        }
-        return null;
     }
 
     static void tryMakeAccessible(AccessibleObject object) {

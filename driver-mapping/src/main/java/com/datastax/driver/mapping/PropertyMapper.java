@@ -57,52 +57,45 @@ class PropertyMapper {
     PropertyMapper(Class<?> baseClass, String propertyName, String alias, Field field, PropertyDescriptor property, PropertyScanConfiguration configuration) {
         this.propertyName = propertyName;
         this.alias = alias;
-        this.field = field;
+        this.field = configuration.getPropertyAccessStrategy().isFieldAccessAllowed() ? field : null;
         this.property = property;
         this.configuration = configuration;
-        getter = ReflectionUtils.findGetter(property);
-        setter = ReflectionUtils.findSetter(baseClass, property);
-        annotations = ReflectionUtils.scanPropertyAnnotations(field, property);
-        if (field != null)
-            ReflectionUtils.tryMakeAccessible(field);
-        if (getter != null)
-            ReflectionUtils.tryMakeAccessible(getter);
-        if (setter != null)
-            ReflectionUtils.tryMakeAccessible(setter);
+        getter = property != null && configuration.getPropertyAccessStrategy().isGetterSetterAccessAllowed()
+                ? configuration.getPropertyAccessStrategy().locateGetter(baseClass, property)
+                : null;
+        setter = property != null && configuration.getPropertyAccessStrategy().isGetterSetterAccessAllowed()
+                ? configuration.getPropertyAccessStrategy().locateSetter(baseClass, property)
+                : null;
+        annotations = ReflectionUtils.scanPropertyAnnotations(field, getter);
         if (!isTransient()) {
+            if (field != null)
+                ReflectionUtils.tryMakeAccessible(field);
+            if (getter != null)
+                ReflectionUtils.tryMakeAccessible(getter);
+            if (setter != null)
+                ReflectionUtils.tryMakeAccessible(setter);
             checkArgument((field != null && field.isAccessible()) || (getter != null && getter.isAccessible()),
                     "Property '%s' is not readable", propertyName);
             checkArgument((field != null && field.isAccessible()) || (setter != null && setter.isAccessible()),
                     "Property '%s' is not writable", propertyName);
+            columnName = inferColumnName();
+            position = inferPosition();
+            javaType = inferJavaType();
+            customCodec = createCustomCodec();
+        } else {
+            columnName = null;
+            position = 0;
+            javaType = null;
+            customCodec = null;
         }
-        columnName = inferColumnName();
-        position = inferPosition();
-        javaType = inferJavaType();
-        customCodec = createCustomCodec();
     }
 
     Object getValue(Object entity) {
-        try {
-            // try getter first, if available, otherwise direct field access
-            if (getter != null && getter.isAccessible())
-                return getter.invoke(entity);
-            else
-                return field.get(entity);
-        } catch (Exception e) {
-            throw new IllegalArgumentException("Unable to read property '" + propertyName + "' in " + entity.getClass(), e);
-        }
+        return configuration.getPropertyAccessStrategy().getValue(entity, propertyName, field, getter);
     }
 
     void setValue(Object entity, Object value) {
-        try {
-            // try setter first, if available, otherwise direct field access
-            if (setter != null && setter.isAccessible())
-                setter.invoke(entity, value);
-            else
-                field.set(entity, value);
-        } catch (Exception e) {
-            throw new IllegalArgumentException("Unable to write property '" + propertyName + "' in " + entity.getClass(), e);
-        }
+        configuration.getPropertyAccessStrategy().setValue(entity, value, propertyName, field, setter);
     }
 
     boolean hasAnnotation(Class<? extends Annotation> annotationClass) {

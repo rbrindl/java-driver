@@ -35,7 +35,7 @@ public class PropertyScanConfiguration {
      */
     public static class Builder {
 
-        private PropertyAccessStrategy propertyAccessStrategy = PropertyAccessStrategy.BOTH;
+        private PropertyAccessStrategy propertyAccessStrategy = new DefaultPropertyAccessStrategy();
 
         private PropertyTransienceStrategy propertyTransienceStrategy = DefaultPropertyTransienceStrategy.builder().build();
 
@@ -43,7 +43,7 @@ public class PropertyScanConfiguration {
 
         /**
          * Sets the {@link PropertyAccessStrategy property access strategy} to use.
-         * The default is {@link PropertyAccessStrategy#BOTH}.
+         * The default is {@link DefaultPropertyAccessStrategy}.
          *
          * @param propertyAccessStrategy the {@link PropertyAccessStrategy property access strategy} to use.
          * @return this {@link Builder} instance (to allow for fluent builder pattern).

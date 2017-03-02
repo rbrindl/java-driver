@@ -15,45 +15,76 @@
  */
 package com.datastax.driver.mapping.config;
 
+import java.beans.PropertyDescriptor;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+
 /**
  * A strategy to determine how mapped properties are read and written.
  */
-public enum PropertyAccessStrategy {
+public interface PropertyAccessStrategy {
 
     /**
-     * Use getters and setters exclusively. These must be available for all mapped properties.
-     */
-    GETTERS_AND_SETTERS,
-
-    /**
-     * Use field access exclusively. Fields do not need to be declared public,
-     * the driver will attempt to make them accessible via reflection if required.
-     */
-    FIELDS,
-
-    /**
-     * Use getters and setters preferably, and if these are not available,
-     * use field access. Fields do not need to be declared public,
-     * the driver will attempt to make them accessible via reflection if required.
-     * This is the default access strategy.
-     */
-    BOTH;
-
-    /**
-     * Returns whether this strategy allows property access through fields.
+     * Returns whether or not the given {@link Field} should
+     * be used when accessing its underlying property.
      *
-     * @return {@code true} if the strategy allows property access through fields, {@code false} otherwise.
+     * @return {@code true} if the given field should be considered, {@code false} otherwise.
      */
-    public boolean isFieldAccessAllowed() {
-        return this == FIELDS || this == BOTH;
-    }
+    boolean isFieldAccessAllowed();
 
     /**
-     * Returns whether this strategy allows property access through getters and setters.
+     * Returns whether or not the given {@link PropertyDescriptor} should
+     * be used when accessing its underlying property.
      *
-     * @return {@code true} if the strategy allows property access through getters and setters, {@code false} otherwise.
+     * @return {@code true} if the given {@link PropertyDescriptor} should be considered, {@code false} otherwise.
      */
-    public boolean isGettersAndSettersAccessAllowed() {
-        return this == GETTERS_AND_SETTERS || this == BOTH;
-    }
+    boolean isGetterSetterAccessAllowed();
+
+    /**
+     * Locates a getter method for the given base class and given property.
+     * If this method returns {@code null} then no getter will be used to access the given property.
+     *
+     * @param baseClass The base class; never {@code null}.
+     * @param property  The property to locate a getter for; never {@code null}.
+     * @return The getter method for the given base class and given property, or {@code null} if no getter was found.
+     */
+    Method locateGetter(Class<?> baseClass, PropertyDescriptor property);
+
+    /**
+     * Locates a setter method for the given base class and given property.
+     * If this method returns {@code null} then no setter will be used to access the given property.
+     *
+     * @param baseClass The base class; never {@code null}.
+     * @param property  The property to locate a setter for; never {@code null}.
+     * @return The setter method for the given base class and given property, or {@code null} if no setter was found.
+     */
+    Method locateSetter(Class<?> baseClass, PropertyDescriptor property);
+
+    /**
+     * Reads a property.
+     *
+     * @param entity       The instance to read the property from; never {@code null}.
+     * @param propertyName The property name, as inferred by the mapper; never {@code null}.
+     * @param field        The property field; may be {@code null}.
+     *                     May be {@code null}, but {@code field} and {@code getter} cannot be both {@code null}.
+     * @param getter       The property's getter method, as inferred by {@link #locateGetter(Class, PropertyDescriptor) this strategy}.
+     *                     May be {@code null}, but {@code field} and {@code getter} cannot be both {@code null}.
+     * @return The property value.
+     * @throws IllegalArgumentException if the property cannot be read.
+     */
+    Object getValue(Object entity, String propertyName, Field field, Method getter);
+
+    /**
+     * Writes a property.
+     *
+     * @param entity       The instance to read the property from; never {@code null}.
+     * @param propertyName The property name, as inferred by the mapper; never {@code null}.
+     * @param field        The property field; may be {@code null}.
+     *                     May be {@code null}, but {@code field} and {@code setter} cannot be both {@code null}.
+     * @param setter       The property's setter method, as inferred by {@link #locateSetter(Class, PropertyDescriptor) this strategy}.
+     *                     May be {@code null}, but {@code field} and {@code setter} cannot be both {@code null}.
+     * @throws IllegalArgumentException if the property cannot be written.
+     */
+    void setValue(Object entity, Object value, String propertyName, Field field, Method setter);
+
 }
