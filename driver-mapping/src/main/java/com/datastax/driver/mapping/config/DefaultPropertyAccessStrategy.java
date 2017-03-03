@@ -25,18 +25,26 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * The default access strategy used by the mapper.
  * <p/>
- * This strategy tries getter/setter access first, if these are present,
- * then field access as a last resort.
+ * This strategy tries getters and setters first, if available,
+ * then field access, as a last resort.
+ * <p/>
+ * It recognizes standard getter and setter methods (as defined by the Java Beans specification),
+ * and also "relaxed" setter methods, i.e., setter methods whose return type are not {@code void}.
+ * <p/>
+ * Property values are read and written using the Java reflection API. Subclasses
+ * may override {@link #getValue(Object, String, Field, Method)} and/or
+ * {@link #setValue(Object, Object, String, Field, Method)} if they are capable of accessing
+ * properties without incurring the cost of reflection.
  */
 public class DefaultPropertyAccessStrategy implements PropertyAccessStrategy {
 
     @Override
-    public boolean isFieldAccessAllowed() {
+    public boolean isFieldScanAllowed() {
         return true;
     }
 
     @Override
-    public boolean isGetterSetterAccessAllowed() {
+    public boolean isGetterSetterScanAllowed() {
         return true;
     }
 
@@ -66,11 +74,10 @@ public class DefaultPropertyAccessStrategy implements PropertyAccessStrategy {
     public Object getValue(Object entity, String propertyName, Field field, Method getter) {
         try {
             // try getter first, if available, otherwise direct field access
-            if (getter != null && getter.isAccessible()) {
+            if (getter != null && getter.isAccessible())
                 return getter.invoke(entity);
-            } else {
+            else
                 return checkNotNull(field).get(entity);
-            }
         } catch (Exception e) {
             throw new IllegalArgumentException("Unable to read property '" + propertyName + "' in " + entity.getClass(), e);
         }
@@ -80,14 +87,14 @@ public class DefaultPropertyAccessStrategy implements PropertyAccessStrategy {
     public void setValue(Object entity, Object value, String propertyName, Field field, Method setter) {
         try {
             // try setter first, if available, otherwise direct field access
-            if (setter != null && setter.isAccessible()) {
+            if (setter != null && setter.isAccessible())
                 setter.invoke(entity, value);
-            } else {
-                checkNotNull(field).set(entity, value);
-            }
+            else
+                field.set(entity, value);
         } catch (Exception e) {
             throw new IllegalArgumentException("Unable to write property '" + propertyName + "' in " + entity.getClass(), e);
         }
     }
+
 
 }

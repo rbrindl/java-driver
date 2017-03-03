@@ -21,7 +21,7 @@ package com.datastax.driver.mapping.config;
 public class GetterSetterOnlyPropertyAccessStrategy extends DefaultPropertyAccessStrategy {
 
     @Override
-    public boolean isFieldAccessAllowed() {
+    public boolean isFieldScanAllowed() {
         return false;
     }
 

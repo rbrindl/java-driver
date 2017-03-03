@@ -27,7 +27,8 @@ public interface HierarchyScanStrategy {
      * filtering out any ancestor that should not be scanned.
      * <p/>
      * Implementors should <em>not</em> include {@code mappedClass}
-     * in the returned list.
+     * in the returned list, as the mapped class itself is
+     * automatically scanned.
      *
      * @param mappedClass The mapped class; this is necessarily a class annotated with
      *                  either {@link com.datastax.driver.mapping.annotations.Table @Table} or

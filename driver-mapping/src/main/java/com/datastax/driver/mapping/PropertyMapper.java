@@ -21,7 +21,6 @@ import com.datastax.driver.mapping.annotations.*;
 import com.datastax.driver.mapping.config.MappingConfiguration;
 import com.google.common.reflect.TypeToken;
 
-import java.beans.PropertyDescriptor;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -40,52 +39,40 @@ import static com.google.common.base.Preconditions.checkArgument;
  */
 class PropertyMapper {
 
-    private final String propertyName;
     final String alias;
     final String columnName;
+    final int position;
     final TypeToken<Object> javaType;
     final TypeCodec<Object> customCodec;
-    final int position;
-
+    private final String propertyName;
     private final Field field;
     private final Method getter;
     private final Method setter;
     private final Map<Class<? extends Annotation>, Annotation> annotations;
     private final MappingConfiguration configuration;
 
-    PropertyMapper(Class<?> baseClass, String propertyName, String alias, Field field, PropertyDescriptor property, MappingConfiguration configuration) {
+    PropertyMapper(String propertyName, String alias, Field field, Method getter, Method setter, Map<Class<? extends Annotation>, Annotation> annotations, MappingConfiguration configuration) {
         this.propertyName = propertyName;
         this.alias = alias;
-        this.field = configuration.getPropertyAccessStrategy().isFieldAccessAllowed() ? field : null;
+        this.field = field;
+        this.getter = getter;
+        this.setter = setter;
+        this.annotations = annotations;
         this.configuration = configuration;
-        getter = property != null && configuration.getPropertyAccessStrategy().isGetterSetterAccessAllowed()
-                ? configuration.getPropertyAccessStrategy().locateGetter(baseClass, property)
-                : null;
-        setter = property != null && configuration.getPropertyAccessStrategy().isGetterSetterAccessAllowed()
-                ? configuration.getPropertyAccessStrategy().locateSetter(baseClass, property)
-                : null;
-        annotations = ReflectionUtils.scanPropertyAnnotations(field, getter);
-        if (!isTransient()) {
-            if (field != null)
-                ReflectionUtils.tryMakeAccessible(field);
-            if (getter != null)
-                ReflectionUtils.tryMakeAccessible(getter);
-            if (setter != null)
-                ReflectionUtils.tryMakeAccessible(setter);
-            checkArgument((field != null && field.isAccessible()) || (getter != null && getter.isAccessible()),
-                    "Property '%s' is not readable", propertyName);
-            checkArgument((field != null && field.isAccessible()) || (setter != null && setter.isAccessible()),
-                    "Property '%s' is not writable", propertyName);
-            columnName = inferColumnName();
-            position = inferPosition();
-            javaType = inferJavaType();
-            customCodec = createCustomCodec();
-        } else {
-            columnName = null;
-            position = 0;
-            javaType = null;
-            customCodec = null;
-        }
+        if (field != null)
+            ReflectionUtils.tryMakeAccessible(field);
+        if (getter != null)
+            ReflectionUtils.tryMakeAccessible(getter);
+        if (setter != null)
+            ReflectionUtils.tryMakeAccessible(setter);
+        checkArgument((field != null && field.isAccessible()) || (getter != null && getter.isAccessible()),
+                "Property '%s' is not readable", propertyName);
+        checkArgument((field != null && field.isAccessible()) || (setter != null && setter.isAccessible()),
+                "Property '%s' is not writable", propertyName);
+        columnName = inferColumnName();
+        position = inferPosition();
+        javaType = inferJavaType();
+        customCodec = createCustomCodec();
     }
 
     Object getValue(Object entity) {
@@ -111,11 +98,6 @@ class PropertyMapper {
 
     boolean isComputed() {
         return hasAnnotation(Computed.class);
-    }
-
-    boolean isTransient() {
-        return field == null && getter == null && setter == null
-                || configuration.getPropertyTransienceStrategy().isTransient(propertyName, field, getter, setter, annotations);
     }
 
     boolean isPartitionKey() {
