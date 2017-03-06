@@ -26,14 +26,14 @@ public interface HierarchyScanStrategy {
      * Computes the ancestors of the given base class, optionally
      * filtering out any ancestor that should not be scanned.
      * <p/>
-     * Implementors should <em>not</em> include {@code mappedClass}
-     * in the returned list, as the mapped class itself is
-     * automatically scanned.
+     * Implementors should always include {@code mappedClass}
+     * in the returned list.
      *
      * @param mappedClass The mapped class; this is necessarily a class annotated with
      *                  either {@link com.datastax.driver.mapping.annotations.Table @Table} or
      *                  {@link com.datastax.driver.mapping.annotations.UDT @UDT}.
-     * @return the ancestors of {@code mappedClass} that should be scanned,
+     * @return the list of classes that should be scanned,
+     * including {@code mappedClass} itself and its ancestors,
      * ordered from the lowest (closest to {@code mappedClass}) to the highest (or farthest from {@code mappedClass}).
      */
     List<Class<?>> filterClassHierarchy(Class<?> mappedClass);

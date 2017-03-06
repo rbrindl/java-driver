@@ -218,8 +218,8 @@ public class Mapper<T> {
         boolean saveNullFields = shouldSaveNullFields(options);
 
         for (PropertyMapper col : mapper.allColumns) {
-            Object value = col.getValue(entity);
-            if (!col.isComputed() && (saveNullFields || value != null)) {
+            Object value = col.mappedProperty.getValue(entity);
+            if (!col.mappedProperty.isComputed() && (saveNullFields || value != null)) {
                 values.put(col, value);
             }
         }
@@ -253,12 +253,12 @@ public class Mapper<T> {
         return option == null || option.saveNullFields;
     }
 
-    private static void setObject(BoundStatement bs, int i, Object value, PropertyMapper mapper) {
-        TypeCodec<Object> customCodec = mapper.customCodec;
+    private static <T> void setObject(BoundStatement bs, int i, T value, PropertyMapper<T> mapper) {
+        TypeCodec<T> customCodec = mapper.mappedProperty.getCustomCodec();
         if (customCodec != null)
             bs.set(i, value, customCodec);
         else
-            bs.set(i, value, mapper.javaType);
+            bs.set(i, value, mapper.mappedProperty.getPropertyType());
     }
 
     /**
@@ -391,9 +391,12 @@ public class Mapper<T> {
                 BoundStatement bs = new MapperBoundStatement(input);
                 int i = 0;
                 for (Object value : primaryKeys) {
-                    PropertyMapper column = mapper.getPrimaryKeyColumn(i);
+                    @SuppressWarnings("unchecked")
+                    PropertyMapper<Object> column = (PropertyMapper<Object>) mapper.getPrimaryKeyColumn(i);
                     if (value == null) {
-                        throw new IllegalArgumentException(String.format("Invalid null value for PRIMARY KEY column %s (argument %d)", column.columnName, i));
+                        throw new IllegalArgumentException(
+                                String.format("Invalid null value for PRIMARY KEY column %s (argument %d)",
+                                        column.mappedProperty.getColumnName(), i));
                     }
                     setObject(bs, i++, value, column);
                 }
@@ -559,7 +562,7 @@ public class Mapper<T> {
     private ListenableFuture<BoundStatement> deleteQueryAsync(T entity, EnumMap<Option.Type, Option> options) {
         List<Object> pks = new ArrayList<Object>();
         for (int i = 0; i < mapper.primaryKeySize(); i++) {
-            pks.add(mapper.getPrimaryKeyColumn(i).getValue(entity));
+            pks.add(mapper.getPrimaryKeyColumn(i).mappedProperty.getValue(entity));
         }
         return deleteQueryAsync(pks, options);
     }
@@ -600,9 +603,11 @@ public class Mapper<T> {
 
                 int columnNumber = 0;
                 for (Object value : primaryKey) {
-                    PropertyMapper column = mapper.getPrimaryKeyColumn(columnNumber);
+                    @SuppressWarnings("unchecked")
+                    PropertyMapper<Object> column = (PropertyMapper<Object>) mapper.getPrimaryKeyColumn(columnNumber);
                     if (value == null) {
-                        throw new IllegalArgumentException(String.format("Invalid null value for PRIMARY KEY column %s (argument %d)", column.columnName, i));
+                        throw new IllegalArgumentException(String.format("Invalid null value for PRIMARY KEY column %s (argument %d)",
+                                column.mappedProperty.getColumnName(), i));
                     }
                     setObject(bs, i++, value, column);
                     columnNumber++;

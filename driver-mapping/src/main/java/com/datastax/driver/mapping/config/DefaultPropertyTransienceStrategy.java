@@ -15,17 +15,14 @@
  */
 package com.datastax.driver.mapping.config;
 
+import com.datastax.driver.mapping.AnnotatedMappedProperty;
+import com.datastax.driver.mapping.MappedProperty;
 import com.datastax.driver.mapping.annotations.*;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -101,12 +98,14 @@ public class DefaultPropertyTransienceStrategy implements PropertyTransienceStra
     }
 
     @Override
-    public boolean isTransient(Class<?> mappedClass, String propertyName, Field field, Method getter, Method setter, Map<Class<? extends Annotation>, Annotation> annotations) {
-        return annotations.containsKey(Transient.class)
-                || (field != null && Modifier.isTransient(field.getModifiers()))
-                // If a property is both annotated with a non-transient annotation and declared transient in transientProperties,
-                // annotations take precedence (the property will not be transient)
-                || transientProperties.contains(propertyName) && Collections.disjoint(annotations.keySet(), NON_TRANSIENT_ANNOTATIONS);
+    public boolean isTransient(MappedProperty<?> mappedProperty) {
+        if (mappedProperty instanceof AnnotatedMappedProperty) {
+            AnnotatedMappedProperty<?> annotatedMappedProperty = (AnnotatedMappedProperty<?>) mappedProperty;
+            return annotatedMappedProperty.hasAnnotation(Transient.class)
+                    || (transientProperties.contains(mappedProperty.getPropertyName())
+                    && Collections.disjoint(annotatedMappedProperty.getAnnotations(), NON_TRANSIENT_ANNOTATIONS));
+        }
+        return false;
     }
 
 }

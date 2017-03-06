@@ -64,7 +64,7 @@ class AnnotationChecks {
     /**
      * Checks that a field is only annotated with the given mapping annotations, and that its "frozen" annotations are valid.
      */
-    static void validateAnnotations(PropertyMapper property, Collection<? extends Class<? extends Annotation>> allowed) {
+    static void validateAnnotations(AnnotatedMappedProperty<?> property, Collection<? extends Class<? extends Annotation>> allowed) {
         Class<? extends Annotation> invalid = validateAnnotations(property.getAnnotations(), allowed);
         if (invalid != null) {
             throw new IllegalArgumentException(String.format("Annotation @%s is not allowed on property '%s'",
@@ -85,14 +85,14 @@ class AnnotationChecks {
         return null;
     }
 
-    private static void checkValidPrimaryKey(PropertyMapper property) {
+    private static void checkValidPrimaryKey(AnnotatedMappedProperty<?> property) {
         if (property.isPartitionKey() && property.isClusteringColumn())
             throw new IllegalArgumentException(String.format("Property '%s' cannot be annotated with both @PartitionKey and @ClusteringColumn", property));
     }
 
-    private static void checkValidComputed(PropertyMapper property) {
+    private static void checkValidComputed(AnnotatedMappedProperty<?> property) {
         if (property.isComputed()) {
-            Computed computed = property.annotation(Computed.class);
+            Computed computed = property.getAnnotation(Computed.class);
             if (computed.value().isEmpty()) {
                 throw new IllegalArgumentException(String.format("Property '%s': attribute 'value' of annotation @Computed is mandatory for computed properties", property));
             }
@@ -102,10 +102,10 @@ class AnnotationChecks {
         }
     }
 
-    static void validateOrder(List<PropertyMapper> properties, String annotation) {
+    static void validateOrder(List<PropertyMapper<?>> properties, String annotation) {
         for (int i = 0; i < properties.size(); i++) {
-            PropertyMapper property = properties.get(i);
-            int pos = property.position;
+            PropertyMapper<?> property = properties.get(i);
+            int pos = property.mappedProperty.getPosition();
             if (pos != i)
                 throw new IllegalArgumentException(String.format("Invalid ordering value %d for annotation %s of property '%s', was expecting %d",
                         pos, annotation, property, i));

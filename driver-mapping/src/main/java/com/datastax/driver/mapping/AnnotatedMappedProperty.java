@@ -13,17 +13,20 @@
  *   See the License for the specific language governing permissions and
  *   limitations under the License.
  */
-package com.datastax.driver.mapping.config;
+package com.datastax.driver.mapping;
+
+import java.lang.annotation.Annotation;
+import java.util.Collection;
 
 /**
- * A {@link PropertyAccessStrategy} that will always use field access exclusively
- * and ignore any available getters or setters.
+ *
  */
-public class FieldOnlyPropertyAccessStrategy extends DefaultPropertyAccessStrategy {
+public interface AnnotatedMappedProperty<T> extends MappedProperty<T> {
 
-    @Override
-    protected boolean isGetterSetterScanAllowed() {
-        return false;
-    }
+    boolean hasAnnotation(Class<? extends Annotation> annotationClass);
+
+    <A extends Annotation> A getAnnotation(Class<A> annotationClass);
+
+    Collection<Annotation> getAnnotations();
 
 }

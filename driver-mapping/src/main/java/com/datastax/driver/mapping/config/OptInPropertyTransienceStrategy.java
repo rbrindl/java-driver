@@ -15,11 +15,10 @@
  */
 package com.datastax.driver.mapping.config;
 
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
+import com.datastax.driver.mapping.AnnotatedMappedProperty;
+import com.datastax.driver.mapping.MappedProperty;
+
 import java.util.Collections;
-import java.util.Map;
 
 /**
  * A {@link PropertyTransienceStrategy} that adopts a conservative, opt-in approach that
@@ -39,8 +38,12 @@ import java.util.Map;
 public class OptInPropertyTransienceStrategy implements PropertyTransienceStrategy {
 
     @Override
-    public boolean isTransient(Class<?> mappedClass, String propertyName, Field field, Method getter, Method setter, Map<Class<? extends Annotation>, Annotation> annotations) {
-        return Collections.disjoint(annotations.keySet(), DefaultPropertyTransienceStrategy.NON_TRANSIENT_ANNOTATIONS);
+    public boolean isTransient(MappedProperty<?> mappedProperty) {
+        if (mappedProperty instanceof AnnotatedMappedProperty) {
+            AnnotatedMappedProperty<?> annotatedMappedProperty = (AnnotatedMappedProperty<?>) mappedProperty;
+            return Collections.disjoint(annotatedMappedProperty.getAnnotations(), DefaultPropertyTransienceStrategy.NON_TRANSIENT_ANNOTATIONS);
+        }
+        return true;
     }
 
 }

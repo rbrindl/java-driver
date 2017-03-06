@@ -16,12 +16,19 @@
 package com.datastax.driver.mapping.config;
 
 import com.datastax.driver.core.CCMTestsSupport;
+import com.datastax.driver.mapping.DefaultMappedProperty;
+import com.datastax.driver.mapping.MappedProperty;
 import com.datastax.driver.mapping.Mapper;
 import com.datastax.driver.mapping.MappingManager;
 import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.datastax.driver.mapping.annotations.Table;
 import com.datastax.driver.mapping.annotations.Transient;
+import com.google.common.collect.Sets;
+import com.google.common.reflect.TypeToken;
 import org.testng.annotations.Test;
+
+import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -122,6 +129,82 @@ public class MappingConfigurationPropertyAccessTest extends CCMTestsSupport {
 
         public void setV(int v) {
             this.storeVValueButNotMapped = v;
+        }
+    }
+
+    @Test(groups = "short")
+    public void should_be_able_to_avoid_reflection() {
+        MappingConfiguration conf = MappingConfiguration.builder()
+                .withPropertyAccessStrategy(new NoReflectionPropertyAccessStrategy())
+                .build();
+        MappingManager mappingManager = new MappingManager(session(), conf);
+        Mapper<Foo3> mapper = mappingManager.mapper(Foo3.class);
+        Foo3 foo = mapper.get(1);
+        assertThat(foo.getV()).isEqualTo(1);
+    }
+
+    @Table(name = "foo")
+    @SuppressWarnings({"unused", "WeakerAccess"})
+    public static class Foo4 {
+
+        @PartitionKey
+        private int k;
+
+        private int v;
+
+        public int getK() {
+            return k;
+        }
+
+        public void setK(int k) {
+            this.k = k;
+        }
+
+        public int getV() {
+            return v;
+        }
+
+        // fluent setter
+        public Foo4 setV(int v) {
+            this.v = v;
+            return this;
+        }
+    }
+
+    public static class NoReflectionPropertyAccessStrategy implements PropertyAccessStrategy {
+
+        @Override
+        public Set<MappedProperty<?>> mapProperties(List<Class<?>> classHierarchy) {
+
+            DefaultMappedProperty<Integer> k = new DefaultMappedProperty<Integer>(
+                    "k", "k", TypeToken.of(Integer.class),
+                    null, true, false, false, 0) {
+                @Override
+                public Integer getValue(Object entity) {
+                    return ((Foo4) entity).getK();
+                }
+
+                @Override
+                public void setValue(Object entity, Integer value) {
+                    ((Foo4) entity).setK(value);
+                }
+            };
+
+            DefaultMappedProperty<Integer> v = new DefaultMappedProperty<Integer>(
+                    "v", "v", TypeToken.of(Integer.class),
+                    null, false, false, false, 0) {
+                @Override
+                public Integer getValue(Object entity) {
+                    return ((Foo4) entity).getV();
+                }
+
+                @Override
+                public void setValue(Object entity, Integer value) {
+                    ((Foo4) entity).setV(value);
+                }
+            };
+
+            return Sets.<MappedProperty<?>>newHashSet(k, v);
         }
     }
 

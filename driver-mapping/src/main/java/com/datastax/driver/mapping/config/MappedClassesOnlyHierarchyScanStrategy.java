@@ -30,6 +30,6 @@ public class MappedClassesOnlyHierarchyScanStrategy implements HierarchyScanStra
 
     @Override
     public List<Class<?>> filterClassHierarchy(Class<?> mappedClass) {
-        return Collections.emptyList();
+        return Collections.<Class<?>>singletonList(mappedClass);
     }
 }

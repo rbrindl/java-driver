@@ -62,10 +62,10 @@ class AnnotationParser {
             FrozenValue.class,
             Transient.class);
 
-    private static final Comparator<PropertyMapper> POSITION_COMPARATOR = new Comparator<PropertyMapper>() {
+    private static final Comparator<PropertyMapper<?>> POSITION_COMPARATOR = new Comparator<PropertyMapper<?>>() {
         @Override
-        public int compare(PropertyMapper o1, PropertyMapper o2) {
-            return o1.position - o2.position;
+        public int compare(PropertyMapper<?> o1, PropertyMapper<?> o2) {
+            return o1.mappedProperty.getPosition() - o2.mappedProperty.getPosition();
         }
     };
 
@@ -104,49 +104,45 @@ class AnnotationParser {
 
         EntityMapper<T> mapper = new EntityMapper<T>(entityClass, ksName, tableName, writeConsistency, readConsistency);
 
-        List<PropertyMapper> pks = new ArrayList<PropertyMapper>();
-        List<PropertyMapper> ccs = new ArrayList<PropertyMapper>();
-        List<PropertyMapper> rgs = new ArrayList<PropertyMapper>();
+        List<PropertyMapper<?>> pks = new ArrayList<PropertyMapper<?>>();
+        List<PropertyMapper<?>> ccs = new ArrayList<PropertyMapper<?>>();
+        List<PropertyMapper<?>> rgs = new ArrayList<PropertyMapper<?>>();
 
         MappingConfiguration configuration = mappingManager.getConfiguration();
-        Map<String, Object[]> fieldsAndProperties = ReflectionUtils.scanFieldsAndProperties(entityClass, configuration);
+        List<Class<?>> classHierarchy = configuration.getHierarchyScanStrategy().filterClassHierarchy(entityClass);
+        Set<MappedProperty<?>> properties = configuration.getPropertyAccessStrategy().mapProperties(classHierarchy);
         AtomicInteger columnCounter = mappingManager.isCassandraV1 ? null : new AtomicInteger(0);
 
-        for (Map.Entry<String, Object[]> entry : fieldsAndProperties.entrySet()) {
+        for (MappedProperty<?> mappedProperty : properties) {
 
-            String propertyName = entry.getKey();
-            java.lang.reflect.Field field = (java.lang.reflect.Field) entry.getValue()[0];
-            Method getter = (Method) entry.getValue()[1];
-            Method setter = (Method) entry.getValue()[2];
-            Map<Class<? extends Annotation>, Annotation> annotations = ReflectionUtils.scanPropertyAnnotations(field, getter);
-
-            if (configuration.getPropertyTransienceStrategy().isTransient(entityClass, propertyName, field, getter, setter, annotations))
+            if (configuration.getPropertyTransienceStrategy().isTransient(mappedProperty))
                 continue;
 
             String alias = (columnCounter != null)
                     ? "col" + columnCounter.incrementAndGet()
                     : null;
 
-            PropertyMapper propertyMapper = new PropertyMapper(propertyName, alias, field, getter, setter, annotations, configuration);
+            PropertyMapper<?> propertyMapper = new PropertyMapper(mappedProperty, alias);
 
-            if (mappingManager.isCassandraV1 && propertyMapper.isComputed())
+            if (mappingManager.isCassandraV1 && mappedProperty.isComputed())
                 throw new UnsupportedOperationException("Computed properties are not supported with native protocol v1");
 
-            AnnotationChecks.validateAnnotations(propertyMapper, VALID_COLUMN_ANNOTATIONS);
+            if (mappedProperty instanceof AnnotatedMappedProperty)
+                AnnotationChecks.validateAnnotations(((AnnotatedMappedProperty<?>) mappedProperty), VALID_COLUMN_ANNOTATIONS);
 
-            if (!propertyMapper.isComputed() && tableMetadata.getColumn(propertyMapper.columnName) == null)
+            if (!mappedProperty.isComputed() && tableMetadata.getColumn(mappedProperty.getColumnName()) == null)
                 throw new IllegalArgumentException(String.format("Column %s does not exist in table %s.%s",
-                        propertyMapper.columnName, ksName, tableName));
+                        mappedProperty.getColumnName(), ksName, tableName));
 
-            if (propertyMapper.isPartitionKey())
+            if (mappedProperty.isPartitionKey())
                 pks.add(propertyMapper);
-            else if (propertyMapper.isClusteringColumn())
+            else if (mappedProperty.isClusteringColumn())
                 ccs.add(propertyMapper);
             else
                 rgs.add(propertyMapper);
 
             // if the property is of a UDT type, parse it now
-            for (Class<?> udt : TypeMappings.findUDTs(propertyMapper.javaType.getType()))
+            for (Class<?> udt : TypeMappings.findUDTs(mappedProperty.getPropertyType().getType()))
                 mappingManager.getUDTCodec(udt);
         }
 
@@ -184,34 +180,30 @@ class AnnotationParser {
         if (userType == null)
             throw new IllegalArgumentException(String.format("User type %s does not exist in keyspace %s", udtName, ksName));
 
-        Map<String, PropertyMapper> propertyMappers = new HashMap<String, PropertyMapper>();
+        Map<String, PropertyMapper<?>> propertyMappers = new HashMap<String, PropertyMapper<?>>();
 
         MappingConfiguration configuration = mappingManager.getConfiguration();
-        Map<String, Object[]> fieldsAndProperties = ReflectionUtils.scanFieldsAndProperties(udtClass, configuration);
+        List<Class<?>> classHierarchy = configuration.getHierarchyScanStrategy().filterClassHierarchy(udtClass);
+        Set<MappedProperty<?>> properties = configuration.getPropertyAccessStrategy().mapProperties(classHierarchy);
 
-        for (Map.Entry<String, Object[]> entry : fieldsAndProperties.entrySet()) {
+        for (MappedProperty<?> mappedProperty : properties) {
 
-            String propertyName = entry.getKey();
-            java.lang.reflect.Field field = (java.lang.reflect.Field) entry.getValue()[0];
-            Method getter = (Method) entry.getValue()[1];
-            Method setter = (Method) entry.getValue()[2];
-            Map<Class<? extends Annotation>, Annotation> annotations = ReflectionUtils.scanPropertyAnnotations(field, getter);
-
-            if (configuration.getPropertyTransienceStrategy().isTransient(udtClass, propertyName, field, getter, setter, annotations))
+            if (configuration.getPropertyTransienceStrategy().isTransient(mappedProperty))
                 continue;
 
-            PropertyMapper propertyMapper = new PropertyMapper(propertyName, null, field, getter, setter, annotations, configuration);
+            PropertyMapper<?> propertyMapper = new PropertyMapper(mappedProperty, null);
 
-            AnnotationChecks.validateAnnotations(propertyMapper, VALID_FIELD_ANNOTATIONS);
+            if (mappedProperty instanceof AnnotatedMappedProperty)
+                AnnotationChecks.validateAnnotations(((AnnotatedMappedProperty<?>) mappedProperty), VALID_FIELD_ANNOTATIONS);
 
-            if (!userType.contains(propertyMapper.columnName))
+            if (!userType.contains(mappedProperty.getColumnName()))
                 throw new IllegalArgumentException(String.format("Field %s does not exist in type %s.%s",
-                        propertyMapper.columnName, ksName, userType.getTypeName()));
+                        mappedProperty.getColumnName(), ksName, userType.getTypeName()));
 
-            for (Class<?> fieldUdt : TypeMappings.findUDTs(propertyMapper.javaType.getType()))
+            for (Class<?> fieldUdt : TypeMappings.findUDTs(mappedProperty.getPropertyType().getType()))
                 mappingManager.getUDTCodec(fieldUdt);
 
-            propertyMappers.put(propertyMapper.columnName, propertyMapper);
+            propertyMappers.put(mappedProperty.getColumnName(), propertyMapper);
         }
 
         return new MappedUDTCodec<T>(userType, udtClass, propertyMappers, mappingManager);
