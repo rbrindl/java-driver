@@ -468,4 +468,22 @@ public class UserTypesTest extends CCMTestsSupport {
         userType = userTypeDef.newValue().setList(0, new ArrayList<Object>());
         assertThat(row.getUDTValue("b")).isEqualTo(userType);
     }
+
+    @Test(groups = "short")
+    @CassandraVersion("3.6")
+    public void should_indicate_if_user_type_is_frozen() {
+        session().execute("CREATE TYPE type_for_frozen_test(i int)");
+        session().execute("CREATE TABLE not_frozen_table(k int primary key, v type_for_frozen_test)");
+        session().execute("CREATE TABLE frozen_table(k int primary key, v frozen<type_for_frozen_test>)");
+
+        KeyspaceMetadata keyspaceMetadata = cluster().getMetadata().getKeyspace(this.keyspace);
+
+        assertThat(keyspaceMetadata.getUserType("type_for_frozen_test"))
+                .isNotFrozen();
+
+        assertThat(keyspaceMetadata.getTable("not_frozen_table").getColumn("v").getType())
+                .isNotFrozen();
+        assertThat(keyspaceMetadata.getTable("frozen_table").getColumn("v").getType())
+                .isFrozen();
+    }
 }
