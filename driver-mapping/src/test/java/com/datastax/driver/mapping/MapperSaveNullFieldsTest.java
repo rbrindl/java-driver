@@ -17,6 +17,7 @@ package com.datastax.driver.mapping;
 
 import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.CCMTestsSupport;
+import com.datastax.driver.core.utils.CassandraVersion;
 import com.datastax.driver.mapping.Mapper.Option;
 import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.datastax.driver.mapping.annotations.Table;
@@ -40,12 +41,20 @@ public class MapperSaveNullFieldsTest extends CCMTestsSupport {
         mapper = new MappingManager(session()).mapper(User.class);
     }
 
+    @CassandraVersion("2.2.0")
     @Test(groups = "short")
     void should_save_null_fields_if_requested() {
-        should_save_null_fields(true, Option.saveNullFields(true));
+        int count = 0;
+        while (true) {
+            count++;
+            execute("CREATE TABLE IF NOT EXISTS user (login text primary key, name text, phone text)");
+            should_save_null_fields(true, Option.saveNullFields(true));
 
-        mapper.setDefaultSaveOptions(Option.saveNullFields(true));
-        should_save_null_fields(true);
+            mapper.setDefaultSaveOptions(Option.saveNullFields(true));
+            should_save_null_fields(true);
+            execute("DROP TABLE USER");
+            System.out.println("Count is " + count);
+        }
     }
 
     @Test(groups = "short")
@@ -83,14 +92,14 @@ public class MapperSaveNullFieldsTest extends CCMTestsSupport {
         BoundStatement bs = (BoundStatement) mapper.saveQuery(newUser, options);
         String queryString = bs.preparedStatement().getQueryString();
         if (nullName && !saveExpected)
-            assertThat(queryString).as(description).doesNotContain("\"name\"");
+            assertThat(queryString).as(description).doesNotContain("name");
         else
-            assertThat(queryString).as(description).contains("\"name\"");
+            assertThat(queryString).as(description).contains("name");
 
         if (nullPhone && !saveExpected)
-            assertThat(queryString).as(description).doesNotContain("\"phone\"");
+            assertThat(queryString).as(description).doesNotContain("phone");
         else
-            assertThat(queryString).as(description).contains("\"phone\"");
+            assertThat(queryString).as(description).contains("phone");
 
         // Save entity and check the data
         mapper.save(newUser, options);
